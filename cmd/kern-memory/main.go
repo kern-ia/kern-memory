@@ -13,6 +13,10 @@ import (
 
 	"github.com/yoann/kern-memory/internal/config"
 	"github.com/yoann/kern-memory/internal/httpapi"
+	"github.com/yoann/kern-memory/internal/memory"
+	"github.com/yoann/kern-memory/internal/memory/anon"
+	"github.com/yoann/kern-memory/internal/memory/okf"
+	"github.com/yoann/kern-memory/internal/memory/vector"
 	"github.com/yoann/kern-memory/internal/store"
 )
 
@@ -54,8 +58,40 @@ func runServe() error {
 	}
 	defer s.Close()
 
-	slog.Info("kern-memory: listening", "addr", cfg.Addr)
-	return http.ListenAndServe(cfg.Addr, httpapi.NewRouter(s, cfg.Token))
+	mem, closeMem, err := openMemory(cfg)
+	if err != nil {
+		return err
+	}
+	defer closeMem()
+
+	slog.Info("kern-memory: listening", "addr", cfg.Addr, "pseudonymize", cfg.Pseudonymize)
+	return http.ListenAndServe(cfg.Addr, httpapi.NewCombinedRouter(s, mem, cfg.Token))
+}
+
+// openMemory wires EPIC-13 phase 1's Router (internal/memory) from the two layers plus
+// the optional kern-anon transverse — see internal/memory/anon's doc for why Write-time
+// masking has no round trip here, unlike courtage-extraction's.
+func openMemory(cfg config.Config) (memory.Store, func(), error) {
+	okfStore, err := okf.Open(cfg.OKFDB)
+	if err != nil {
+		return nil, nil, err
+	}
+	vectorStore, err := vector.Open(cfg.VectorDB, cfg.OllamaModel, cfg.OllamaURL)
+	if err != nil {
+		okfStore.Close()
+		return nil, nil, err
+	}
+
+	router := &memory.Router{OKF: okfStore, Vector: vectorStore}
+	closeFn := func() {
+		okfStore.Close()
+		vectorStore.Close()
+	}
+
+	if !cfg.Pseudonymize {
+		return router, closeFn, nil
+	}
+	return anon.Wrap(router), closeFn, nil
 }
 
 func runSeed(args []string) error {
