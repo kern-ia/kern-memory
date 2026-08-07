@@ -41,6 +41,34 @@ func TestWriteKeepsAGivenID(t *testing.T) {
 	}
 }
 
+func TestWriteUpsertsOnAnExistingID(t *testing.T) {
+	// A caller with a stable id (e.g. Kern-UI's marketing calendar, keyed by run id) must
+	// be able to re-write the same memory as its content changes over time — a plain
+	// INSERT would fail on the PRIMARY KEY the second time.
+	s := open(t)
+	ctx := context.Background()
+	_, err := s.Write(ctx, memory.Memory{ID: "item-1", Text: "version 1", Tags: []string{"a"}})
+	if err != nil {
+		t.Fatalf("first Write: %v", err)
+	}
+
+	_, err = s.Write(ctx, memory.Memory{ID: "item-1", Text: "version 2", Tags: []string{"b"}})
+	if err != nil {
+		t.Fatalf("second Write (upsert): %v", err)
+	}
+
+	got, err := s.Query(ctx, memory.Query{})
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("got %d memories, want 1 (upsert must not duplicate the row)", len(got))
+	}
+	if got[0].Memory.Text != "version 2" || got[0].Memory.Tags[0] != "b" {
+		t.Errorf("got %+v, want the second write's content", got[0].Memory)
+	}
+}
+
 func TestQueryByTagReturnsOnlyMatchingMemories(t *testing.T) {
 	s := open(t)
 	ctx := context.Background()
