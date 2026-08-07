@@ -1,32 +1,76 @@
 # kern-memory
 
-**One binary, two contracts** — see [CLAUDE.md](CLAUDE.md) for the split in full:
+**kern-memory is where other `kern-*` bricks put things they need to remember.**
 
-- **C8 v1** — a minimal document/suggestion store for `kern-ui`'s Rédaction view.
-- **EPIC-13 phase 1** — `kern-orch`'s agnostic memory brick: a declarative `.okf` layer
-  plus a semantic vector layer (`chromem-go` + Ollama embeddings), with `kern-anon`
-  pseudonymization on write by default.
+One binary, two things it stores today — see [CLAUDE.md](CLAUDE.md) for why they share a
+repo:
 
-The two coexist in the same process, each with its own storage (SQLite for C8 and `.okf`,
-`chromem-go`'s own files for the vector layer) — none of the three reads another's data.
+- **Documents and suggestions** — a minimal store behind `kern-ui`'s Rédaction view: a
+  document's text, and suggested edits a person accepts or ignores.
+- **Memory** — a general write/query store for any brick that needs to recall something
+  across runs: a declarative layer (tagged facts, exact lookup) and a semantic layer
+  (free text, recalled by meaning).
+
+Both live in the same process, each with its own storage (SQLite for documents and for
+the declarative layer, `chromem-go`'s own files for the semantic layer) — none of the
+three reads another's data.
 
 ## How it fits into the ecosystem
 
 ```
-kern-ui  ──── C8 (documents/suggestions) ────>  kern-memory  <──── kern-anon (Go library,
-                                                      │               pseudonymizes on
-kern-orch ─── EPIC-13 (memory write/query) ──────────┘               write, in-process)
-                                                      │
-                                                      └────>  Ollama (embeddings, local)
+kern-ui  ──── documents & suggestions ───>  kern-memory  <──── kern-anon (Go library,
+                                                  │               pseudonymizes on
+kern-orch ─── memory write/query ────────────────┘               write, in-process)
+                                                  │
+                                                  └────>  Ollama (embeddings, local)
 ```
 
 kern-memory calls no other `kern-*` brick over the network. `kern-anon` is a Go module
 dependency (in-process, no HTTP), not a service call; Ollama is the one real outbound
-network dependency, and only for the vector layer.
+network dependency, and only for the semantic layer.
+
+## What's built
+
+- **Documents and suggestions**: read a document and its suggestions, accept or ignore
+  one. The only way content enters is a CLI command (`seed`, below) — there is no HTTP
+  path to write a document or generate a suggestion yet. See "What's coming".
+- **Declarative memory**: write a fact with tags, recall it by an exact tag match
+  (`similarity` always `1`). Meant for things with a natural lookup key — a rule, a
+  criterion, an id.
+- **Semantic memory**: write free text, recall it by meaning through a local embedding
+  model (Ollama) and a cosine-similarity search (`chromem-go`, embedded — no separate
+  vector database service to run).
+- **Pseudonymization on write**: text is masked (`kern-anon`) before either memory layer
+  persists it, on by default. Pattern-based entities (IBAN, email, phone, French
+  NIR/SIREN/SIRET…) are always covered; person names are covered too when a downloaded
+  ONNX model is configured (opt-in, see Configuration) — organizations and locations are
+  deliberately never masked, because a bank's name is exactly the kind of thing this store
+  exists to recall, not PII to hide from itself.
+
+## What's coming
+
+Stated plainly rather than by an external roadmap's numbering, so this file stays readable
+on its own:
+
+- **Suggestion generation.** Nothing today turns a document's text into a suggestion —
+  that loop (read → suggest → the person decides) has only its second half built.
+- **A write path for documents.** Content only enters through `seed`; there is no
+  HTTP equivalent yet, unlike the memory API's `write`.
+- **A graph/relationship layer.** Today's two memory layers answer "what fact matches
+  this tag" and "what text is close in meaning to this" — neither answers "what is
+  connected to what, and since when" (multi-hop reasoning, provenance, recency). Real
+  need, not yet designed.
+- **Traced recall.** Nothing records *when* or *by whom* a memory was written or recalled.
+  A brick for that (audit/observability) does not exist yet anywhere in the ecosystem —
+  this is blocked on something outside this repo, not forgotten.
+- **Bank-criteria content itself.** The semantic layer works end to end (verified with
+  real embeddings and a real query); what it actually knows depends entirely on what gets
+  written into it. Populating it with real, current content is separate work from the
+  brick that stores it.
 
 ## Connection contracts
 
-### Exposed — C8 v1 (documents and suggestions)
+### Exposed — documents and suggestions
 
 Consumed today by [`kern-ui`](../Kern-UI/README.md)'s Rédaction view, the same way it would
 be consumed by any caller: a bearer token, JSON in and out.
@@ -52,15 +96,10 @@ be consumed by any caller: a bearer token, JSON in and out.
 }
 ```
 
-**What v1 deliberately does not do**: generate suggestions, or accept content over HTTP.
-The only way content enters the store is the `seed` CLI command — see below — exactly like
-`kern-ui useradd` is the only way an account is created. There is no path yet from "a
-document changed" to "a new suggestion appeared"; that is future work, not an oversight.
-
-### Exposed — EPIC-13 phase 1 (memory)
+### Exposed — memory
 
 Intended for `kern-orch` (or any `kern-*` brick that needs to remember something across
-runs) — the same bearer-token convention as C8, on the same daemon.
+runs) — the same bearer-token convention as above, on the same daemon.
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -79,24 +118,18 @@ runs) — the same bearer-token convention as C8, on the same daemon.
 
 | Field | Meaning |
 |---|---|
-| `kind` | `"okf"` (declarative, tag-lookup, `similarity` always `1`) or `"vector"` (semantic, `chromem-go`). Empty on write defaults to `"vector"` — most memory has no natural lookup key. Empty on query fans out to both layers, merged by `similarity` descending. |
+| `kind` | `"okf"` (declarative) or `"vector"` (semantic). Empty on write defaults to `"vector"` — most memory has no natural lookup key. Empty on query fans out to both layers, merged by `similarity` descending. |
 | `id` | Stable caller-chosen key upserts (overwrites) rather than erroring on a repeat — a caller with a natural key (e.g. a run id) does not have to track existence first. Omitted, a random id is generated. |
-| `tags` | `.okf` layer: a query with `tags` returns only memories carrying **all** of them. Ignored by the vector layer. |
+| `tags` | Declarative layer: a query with `tags` returns only memories carrying **all** of them. Ignored by the semantic layer. |
 | `text` | Pseudonymized (`kern-anon`) before it reaches either layer, unless `KERN_MEMORY_PSEUDONYMIZE=false`. What is written is what stays at rest — there is no round-trip demasking; see `internal/memory/anon`'s own doc for why that differs from `kern-orch`'s courtage-extraction pipeline. |
 
-**Person names are masked only when `kern-anon`'s ONNX NER engine is configured**
-(`KERN_ANON_NER_MODEL_DIR`, a build with `-tags onnx`) — the default build masks only
-pattern-based entities (IBAN, email, phone, French NIR/SIREN/SIRET…). Organization and
-location names are never masked even with NER enabled: a bank's name is exactly the kind
-of thing this store is meant to recall, not PII to hide from itself.
-
 **What deliberately does not travel**: embeddings themselves (an implementation detail of
-the vector layer, not part of the contract — a caller never sees a raw vector). `metadata`
-is free-form and passed through verbatim; kern-memory does not interpret it.
+the semantic layer, not part of the contract — a caller never sees a raw vector).
+`metadata` is free-form and passed through verbatim; kern-memory does not interpret it.
 
 ### Consumed — Ollama (embeddings)
 
-The vector layer calls a local Ollama server's embedding API
+The semantic layer calls a local Ollama server's embedding API
 (`KERN_MEMORY_OLLAMA_URL`, default `http://localhost:11434`) with `KERN_MEMORY_OLLAMA_MODEL`
 (default `nomic-embed-text`) — the one real outbound network call this brick makes, and it
 never leaves the machine it runs on. No embedding call is ever made to an external/cloud
@@ -108,15 +141,15 @@ API; this is a deliberate sovereignty choice, not a limitation to work around la
 |---|---|---|
 | `KERN_MEMORY_ADDR` | Listen address | `127.0.0.1:7080` |
 | `KERN_MEMORY_TOKEN` | Bearer token required of every caller | (none, local dev) |
-| `KERN_MEMORY_DB` | SQLite file (C8 v1) | `kern-memory.db` |
-| `KERN_MEMORY_OKF_DB` | SQLite file (`.okf` layer) | `kern-memory-okf.db` |
-| `KERN_MEMORY_VECTOR_DB` | `chromem-go` directory (vector layer) | `kern-memory-vector.db` |
+| `KERN_MEMORY_DB` | SQLite file (documents/suggestions) | `kern-memory.db` |
+| `KERN_MEMORY_OKF_DB` | SQLite file (declarative memory) | `kern-memory-okf.db` |
+| `KERN_MEMORY_VECTOR_DB` | `chromem-go` directory (semantic memory) | `kern-memory-vector.db` |
 | `KERN_MEMORY_OLLAMA_MODEL` | Ollama embedding model | `nomic-embed-text` |
 | `KERN_MEMORY_OLLAMA_URL` | Ollama API base URL | `chromem-go`'s own default, local |
 | `KERN_MEMORY_PSEUDONYMIZE` | Mask PII before writing | `true` (`false` disables) |
 | `KERN_ANON_NER_MODEL_DIR` | Path to a downloaded ONNX NER model — enables person-name masking | (unset, NER off) |
 
-The binary refuses to start on a public address without `KERN_MEMORY_TOKEN`. The vector
+The binary refuses to start on a public address without `KERN_MEMORY_TOKEN`. The semantic
 layer needs a local Ollama server with the embedding model installed
 (`ollama pull nomic-embed-text`).
 
@@ -127,9 +160,10 @@ go build -o bin/kern-memory ./cmd/kern-memory
 KERN_MEMORY_TOKEN=... ./bin/kern-memory serve
 ```
 
-## Seed a document (C8 v1)
+## Seed a document
 
-The only way content enters the C8 v1 store — no HTTP write path exists for it:
+The only way content enters the document store — see "What's coming" for why there is no
+HTTP equivalent yet:
 
 ```sh
 ./bin/kern-memory seed "Document title" path/to/body.txt
