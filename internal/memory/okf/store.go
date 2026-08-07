@@ -57,7 +57,10 @@ func Open(path string) (*Store, error) {
 // Close releases the database handle.
 func (s *Store) Close() error { return s.db.Close() }
 
-// Write inserts m, generating an ID when the caller didn't supply one.
+// Write inserts m, generating an ID when the caller didn't supply one. Writing an id that
+// already exists UPSERTS (overwrites text/tags/metadata/created_at) rather than erroring —
+// a caller with a stable id (e.g. Kern-UI's marketing calendar, keyed by run id) needs to
+// re-write the same memory as its content changes, not track "does this id exist yet".
 func (s *Store) Write(ctx context.Context, m memory.Memory) (memory.Memory, error) {
 	if m.ID == "" {
 		m.ID = newID()
@@ -75,7 +78,9 @@ func (s *Store) Write(ctx context.Context, m memory.Memory) (memory.Memory, erro
 	}
 
 	_, err = s.db.ExecContext(ctx,
-		`INSERT INTO okf_memories (id, text, tags_json, meta_json, created_at) VALUES (?, ?, ?, ?, ?)`,
+		`INSERT INTO okf_memories (id, text, tags_json, meta_json, created_at) VALUES (?, ?, ?, ?, ?)
+		 ON CONFLICT(id) DO UPDATE SET text = excluded.text, tags_json = excluded.tags_json,
+		 meta_json = excluded.meta_json, created_at = excluded.created_at`,
 		m.ID, m.Text, string(tagsJSON), string(metaJSON), m.CreatedAt.Format(time.RFC3339Nano))
 	if err != nil {
 		return memory.Memory{}, fmt.Errorf("okf: write: %w", err)
