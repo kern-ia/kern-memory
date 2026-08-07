@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/YoLaub/PresidioGo/pii"
 	"github.com/yoann/kern-memory/internal/memory"
 )
 
@@ -71,6 +72,25 @@ func TestQueryPassesThroughWithoutTransformation(t *testing.T) {
 	}
 	if len(got) != 1 || got[0].Memory.ID != "a" {
 		t.Errorf("got %v, want the inner store's recalls unchanged", got)
+	}
+}
+
+func TestFilterNerScopeKeepsPersonAndRegexEntitiesButDropsLocationAndOrganization(t *testing.T) {
+	in := []pii.Result{
+		{EntityType: "PERSON", Start: 0, End: 4},
+		{EntityType: "LOCATION", Start: 5, End: 9},
+		{EntityType: "ORGANIZATION", Start: 10, End: 14},
+		{EntityType: "IBAN_CODE", Start: 15, End: 20},
+	}
+
+	got := filterNerScope(in)
+
+	var types []string
+	for _, r := range got {
+		types = append(types, r.EntityType)
+	}
+	if len(types) != 2 || types[0] != "PERSON" || types[1] != "IBAN_CODE" {
+		t.Errorf("got %v, want [PERSON IBAN_CODE]", types)
 	}
 }
 

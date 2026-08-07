@@ -13,6 +13,8 @@ import (
 
 	"github.com/YoLaub/PresidioGo/analyzer"
 	"github.com/YoLaub/PresidioGo/anonymizer"
+	"github.com/YoLaub/PresidioGo/pii"
+	"github.com/YoLaub/PresidioGo/recognizers/ner"
 	"github.com/YoLaub/PresidioGo/registry"
 
 	"github.com/yoann/kern-memory/internal/memory"
@@ -35,6 +37,27 @@ var piiTokenLabels = map[string]string{
 	"MAC_ADDRESS":      "MAC",
 	"IP_ADDRESS":       "IP",
 	"URL":              "URL",
+	// PERSON only appears when nlpEngine() is non-nil (ner_onnx.go/ner_noop.go) — regex
+	// recognizers alone cannot detect a name in free text.
+	"PERSON": "PERSONNE",
+}
+
+// nerEntitiesToDrop excludes LOCATION/ORGANIZATION from masking — mirrors Kern-Orch's
+// internal/cmd/courtage_anon.go, and matters even more here: kern-memory stores things
+// like bank criteria ("La banque Alpha Crédit accepte...") where the organization name
+// IS the content being recalled, not PII to protect. Masking it would break the RAG
+// banques use case (besoin #4) outright, not just reduce quality.
+var nerEntitiesToDrop = map[string]bool{"LOCATION": true, "ORGANIZATION": true}
+
+func filterNerScope(results []pii.Result) []pii.Result {
+	kept := make([]pii.Result, 0, len(results))
+	for _, r := range results {
+		if nerEntitiesToDrop[r.EntityType] {
+			continue
+		}
+		kept = append(kept, r)
+	}
+	return kept
 }
 
 // Store wraps an inner memory.Store, masking PII in Memory.Text on Write.
@@ -71,7 +94,13 @@ func (s *Store) Query(ctx context.Context, q memory.Query) ([]memory.Recall, err
 }
 
 func mask(ctx context.Context, text string) (string, error) {
-	eng, err := analyzer.New(analyzer.WithRegistry(registry.Default("fr")))
+	reg := registry.Default("fr")
+	opts := []analyzer.Option{analyzer.WithRegistry(reg), analyzer.WithDefaultLanguage("fr")}
+	if eng := nlpEngine(); eng != nil {
+		reg.Add(ner.New("fr"))
+		opts = append(opts, analyzer.WithNlpEngine(eng))
+	}
+	eng, err := analyzer.New(opts...)
 	if err != nil {
 		return "", fmt.Errorf("analyzer: %w", err)
 	}
@@ -79,6 +108,7 @@ func mask(ctx context.Context, text string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("analyze: %w", err)
 	}
+	results = filterNerScope(results)
 
 	counters := make(map[string]int)
 	mk := func(label string) anonymizer.Operator {
