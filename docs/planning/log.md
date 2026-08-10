@@ -1,5 +1,13 @@
 # Planning bundle — update log
 
+## 2026-08-10 (2)
+* **Creation**: [SPECS.md](SPECS.md) for kern-memory phase 2, via the `specs/` decision
+  ledger (14 decisions: 4 decided at triage, 10 n/a — inherited unchanged from phase
+  1). Decides the graph layer's storage (flat `graph_edges` SQLite table, `(kind, id)`
+  composite reference into `.okf`/vector), interface (extend `memory.Memory`/`Query`
+  with optional edge fields under `Kind="graph"`, no new HTTP routes), a server-side
+  traversal depth cap, and `Relation` validated as a label rather than pseudonymized.
+
 ## 2026-08-10
 * **Creation**: [SCOPE.md](SCOPE.md) for kern-memory phase 2, via the `scope/` decision
   ledger (13 decisions: 10 decided at triage, 3 n/a). Scopes the graph/relationship
