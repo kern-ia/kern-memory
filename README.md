@@ -178,3 +178,7 @@ go test ./...                # default build — no cgo, no NER
 CGO_ENABLED=1 go test -tags onnx ./...   # includes the ONNX NER integration test,
                                           # skipped unless KERN_ANON_NER_MODEL_DIR is set
 ```
+
+## License
+
+MIT — see [LICENSE](LICENSE).
