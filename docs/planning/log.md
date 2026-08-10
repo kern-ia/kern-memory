@@ -1,5 +1,14 @@
 # Planning bundle — update log
 
+## 2026-08-10 (3)
+* **Creation**: [CONVENTIONS.md](CONVENTIONS.md), via the `conventions/` decision
+  ledger (2 deviations, both decided at triage; everything else is the personal
+  baseline applied as-is). Formalizes the pre-existing root `CONVENTIONS.md` as the
+  project's git/branch/commit model (overriding the baseline's `issue-<n>-<slug>`
+  default) and adds a Security & privacy section the baseline has no slot for,
+  folding in phase 2's `Relation`-field validation rule from `SPECS.md`. Planning is
+  now complete — next is `split-epics` on `SCOPE.md`.
+
 ## 2026-08-10 (2)
 * **Creation**: [SPECS.md](SPECS.md) for kern-memory phase 2, via the `specs/` decision
   ledger (14 decisions: 4 decided at triage, 10 n/a — inherited unchanged from phase
