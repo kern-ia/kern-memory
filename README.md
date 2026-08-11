@@ -198,14 +198,11 @@ File format — a batch of memories and the graph edges between them:
 ```
 
 `kind` per memory entry is `"okf"` or `"vector"` (empty defaults to `"vector"`, same as the
-HTTP write path). `id` is optional on both memories and edges; when given, the declarative
-(`.okf`) and semantic (vector) layers upsert on a repeat id, but the graph layer does not —
-a repeated explicit edge id errors (no `ON CONFLICT` clause on `graph_edges`), and an edge
-with no id (the format's own example above) gets a fresh id each run, so re-running the
-loader on an unchanged file **duplicates edges** rather than upserting them. This is a real
-gap in the graph layer, not a loader bug — see
-`internal/memory/graph/store_test.go`'s `TestWriteWithARepeatedGivenIDFailsRatherThanUpserting`
-and `TestRepeatedWriteWithNoIDCreatesASeparateEdgeNotAnUpsert`.
+HTTP write path). `id` is optional on both memories and edges; when given, all three layers
+(`.okf`, vector, and graph) upsert on a repeat id (fixed in #27 — `graph_edges` previously had
+no `ON CONFLICT` clause). An id left empty gets a fresh one generated on every write, on every
+layer — upserting on re-run requires a stable, caller-chosen id, consistently across all
+three, not something re-running the loader on an unchanged file gets you for free.
 
 ## Tests
 
