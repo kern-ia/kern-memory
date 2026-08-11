@@ -38,3 +38,13 @@ same shape, one more `Kind`, explicit typed fields instead of a smuggled encodin
 
 # Verdict
 Accepted at triage: A.
+
+**Correction (2026-08-11, discovered during issue #7's implementation):** the
+recommendation above under-specified option A — it named `FromID`/`ToID`/`Relation`
+but omitted `FromKind`/`ToKind`, even though decision 03's whole point is a
+`(kind, id)` composite reference to disambiguate `.okf` vs. vector IDs. Without them,
+the fields the interface carries can't populate the columns the storage schema
+requires, and issue #7's implementer correctly left `from_kind`/`to_kind` empty rather
+than invent a value. Corrected: `memory.Memory` carries `FromKind`, `FromID`,
+`ToKind`, `ToID`, `Relation` — all five, not three. The rest of the verdict (extend
+the existing contract, no new routes) stands unchanged.
