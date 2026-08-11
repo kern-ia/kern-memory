@@ -3,12 +3,12 @@ type: Issue
 title: "Add an editable content format and a load-memory CLI command"
 description: "A simple JSON file format for memories + graph edges, and a CLI loader mirroring the existing seed command, so criteria content can be updated by editing a file and re-running one command."
 tags: [epic-2]
-timestamp: 2026-08-11T00:00:00Z
+timestamp: 2026-08-11T21:47:26Z
 epic: 2
 issue: 1
 slug: editable-content-format-and-loader-cli
 size: M
-status: pr-open
+status: done
 gh_issue: 19
 gh_pr: 23
 resource: https://github.com/kern-ia/kern-memory/issues/19

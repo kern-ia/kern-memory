@@ -3,12 +3,12 @@ type: Issue
 title: "Author and load simulated bank-lending criteria content"
 description: "Realistic but fictional bank-criteria memories and their relationships, loaded via the issue 1 CLI tool, standing in for AvelFinances' real (confidential, not-yet-available) content."
 tags: [epic-2]
-timestamp: 2026-08-12T09:00:00Z
+timestamp: 2026-08-11T22:00:00Z
 epic: 2
 issue: 2
 slug: simulated-bank-criteria-content
 size: S
-status: open
+status: in-progress
 gh_issue: 20
 resource: https://github.com/kern-ia/kern-memory/issues/20
 depends_on: [editable-content-format-and-loader-cli]
