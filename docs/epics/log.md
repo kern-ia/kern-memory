@@ -1,5 +1,16 @@
 # Epics bundle — update log
 
+## 2026-08-12
+* **Creation**: [create-issues] Epic 2 (AvelFinances content population) broken into
+  3 issues: [#19](https://github.com/kern-ia/kern-memory/issues/19) editable content
+  format + load-memory CLI (M), [#20](https://github.com/kern-ia/kern-memory/issues/20)
+  simulated bank-criteria content (S), [#21](https://github.com/kern-ia/kern-memory/issues/21)
+  end-to-end recall verification (S). All linked as sub-issues of Epic 2
+  ([#4](https://github.com/kern-ia/kern-memory/issues/4)). Real AvelFinances content
+  isn't available yet (confidential, agency-owned) — the epic populates simulated
+  content instead, with the loader tool (#19) built to be the easy-update path once
+  real content arrives.
+
 ## 2026-08-11 (10)
 * **Closed**: [close-epic] Epic 1: Graph layer. Milestone 1 and tracking issue
   [#3](https://github.com/kern-ia/kern-memory/issues/3) closed. Drift promoted to
