@@ -3,13 +3,14 @@ type: Issue
 title: "Wire the graph store into HTTP, config, and main — verify end to end"
 description: "JSON DTOs for the new fields, KERN_MEMORY_GRAPH_DB config, main.go wiring, and a real-daemon verification of Epic 1's acceptance criteria."
 tags: [epic-1]
-timestamp: 2026-08-11T18:05:00Z
+timestamp: 2026-08-11T19:00:00Z
 epic: 1
 issue: 4
 slug: http-wiring-and-config
 size: S
-status: in-progress
+status: pr-open
 gh_issue: 9
+gh_pr: 15
 resource: https://github.com/kern-ia/kern-memory/issues/9
 depends_on: [graph-contract-and-routing, graph-store-write, graph-store-query-traversal]
 ---

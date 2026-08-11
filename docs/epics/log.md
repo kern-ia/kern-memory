@@ -1,5 +1,20 @@
 # Epics bundle — update log
 
+## 2026-08-11 (8)
+* **PR opened**: [implement-issue] Epic 1 issue 4 (HTTP wiring & config,
+  [#9](https://github.com/kern-ia/kern-memory/issues/9)) — last issue in Epic 1.
+  `internal/httpapi/memory.go`'s write/query DTOs gain the graph edge/traversal
+  fields (`from_kind`, `from_id`, `to_kind`, `to_id`, `relation`, `depth`); fixed a
+  bug the real-daemon verification caught (`text` was required unconditionally,
+  blocking every `kind=graph` write); `KERN_MEMORY_GRAPH_DB` added
+  (`internal/config`); `cmd/kern-memory`'s `openMemory` wires the graph store into
+  `Router.Graph`. `go test -race -count=1 ./...` green (73/73). Real daemon run,
+  full curl transcript (write two edges, single-hop query, 2-hop query) pasted into
+  the PR. Drift recorded: kern-memory's `go.mod` `PresidioGo` pin no longer matches
+  Kern-Anon's renamed module — deferred, see
+  `docs/epics/epic-1-graph-layer/drift/01-presidiogo-module-rename-blocks-local-build.md`.
+  [PR #15](https://github.com/kern-ia/kern-memory/pull/15) against `dev`.
+
 ## 2026-08-11 (7)
 * **Reconcile**: [implement-issue] Epic 1 issue 3 (graph store query/traversal,
   [#8](https://github.com/kern-ia/kern-memory/issues/8)) merged via
