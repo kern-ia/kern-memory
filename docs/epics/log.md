@@ -1,5 +1,11 @@
 # Epics bundle — update log
 
+## 2026-08-11 (16)
+* **Reconcile**: [implement-issue] Epic 2 issue 2 (simulated bank-criteria content,
+  [#20](https://github.com/kern-ia/kern-memory/issues/20)) merged via
+  [PR #24](https://github.com/kern-ia/kern-memory/pull/24) into `dev` — status flipped
+  to `done`. Issue #20 already closed on GitHub.
+
 ## 2026-08-11 (15)
 * **PR opened**: [implement-issue] Epic 2 issue 2 (simulated bank-criteria content,
   [#20](https://github.com/kern-ia/kern-memory/issues/20)) — 10 fictional
