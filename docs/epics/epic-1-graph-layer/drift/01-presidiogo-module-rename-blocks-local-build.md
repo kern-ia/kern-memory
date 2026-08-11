@@ -37,10 +37,8 @@ gh_issue: 9
   That let `cmd/kern-memory` build and the real daemon run for this issue's curl
   verification; the temporary worktree was removed afterward and nothing in
   `kern-memory`'s `go.mod`/`go.sum` changed.
-- **Disposition**: deferred — out of scope for issue 4 (HTTP wiring), and not this
-  repo's decision to make unilaterally: bumping the `replace` target and
-  `github.com/YoLaub/PresidioGo` import paths to `github.com/kern-ia/kern-anon` touches
-  `internal/memory/anon` across the board, a separate, focused change.
+- **Disposition**: resolved (fix pending merge, PR #17) — module renamed in Kern-Anon, all
+  imports updated in kern-memory, awaiting merge into dev.
 - **Revisit when**: before Epic 2 (or any future issue) needs a real daemon build in a
   *fresh* worktree — every such run will hit the same two-stage failure until
   `kern-memory` either updates its `PresidioGo` import paths to
