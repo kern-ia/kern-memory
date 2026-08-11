@@ -1,5 +1,21 @@
 # Epics bundle — update log
 
+## 2026-08-12
+* **PR opened**: [implement-issue] Epic 2 issue 3 (end-to-end recall verification,
+  [#21](https://github.com/kern-ia/kern-memory/issues/21)) — last issue in Epic 2.
+  Loaded issue 2's `bank-criteria.json` into a real `kern-memory serve` instance
+  (real Ollama embeddings, real chromem-go), ran 3 French prospect-style questions
+  through `kind=vector`: each correctly top-ranked its matching criterion
+  (0.73–0.80) clearly ahead of unrelated content (0.60–0.68). Verified a single-hop
+  and a 2-hop `kind=graph` traversal both correctly recall issue 2's edges. Added
+  `docs/epics/epic-2-avelfinances-content-population/content/verification.md` as a
+  repeatable runbook with literal commands, documenting the vector-layer
+  Open-time-load quirk (load content before starting/restarting the daemon).
+  `go test -race -count=1 ./...` green (9/9 packages), no Go code touched.
+  Reconciled epic 2 issue 2 (#20, already merged/closed) to `done`; flipped Epic 2's
+  own status to `done` — all three issues (#19, #20, #21) complete.
+  [PR #25](https://github.com/kern-ia/kern-memory/pull/25) against `dev`.
+
 ## 2026-08-11 (17)
 * **Started**: [implement-issue] Epic 2 issue 3 (end-to-end recall verification,
   [#21](https://github.com/kern-ia/kern-memory/issues/21)) — branch

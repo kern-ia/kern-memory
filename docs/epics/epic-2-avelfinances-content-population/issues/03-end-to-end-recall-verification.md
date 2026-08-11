@@ -10,6 +10,7 @@ slug: end-to-end-recall-verification
 size: S
 status: pr-open
 gh_issue: 21
+gh_pr: 25
 resource: https://github.com/kern-ia/kern-memory/issues/21
 depends_on: [simulated-bank-criteria-content]
 ---
