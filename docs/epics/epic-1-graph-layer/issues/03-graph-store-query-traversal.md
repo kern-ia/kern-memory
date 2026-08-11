@@ -8,7 +8,7 @@ epic: 1
 issue: 3
 slug: graph-store-query-traversal
 size: M
-status: pr-open
+status: done
 gh_issue: 8
 gh_pr: 14
 resource: https://github.com/kern-ia/kern-memory/issues/8
