@@ -81,14 +81,13 @@ func (s *Store) Write(ctx context.Context, m memory.Memory) (memory.Memory, erro
 		m.CreatedAt = time.Now().UTC()
 	}
 
-	// from_kind/to_kind exist in the schema for a future cross-layer disambiguation
-	// (docs/planning/specs/03-graph-storage-schema.md) that memory.Memory doesn't carry
-	// yet — it has one Kind field for the edge itself ("graph"), not one per endpoint.
-	// Left empty rather than misusing m.Kind, which would just repeat "graph" twice.
+	// from_kind/to_kind disambiguate which layer (.okf/vector) each endpoint's id belongs
+	// to (docs/planning/specs/03-graph-storage-schema.md's (kind, id) composite reference)
+	// — ids have no shared namespace across layers.
 	_, err := s.db.ExecContext(ctx,
 		`INSERT INTO graph_edges (id, from_kind, from_id, to_kind, to_id, relation, created_at)
 		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		m.ID, "", m.FromID, "", m.ToID, m.Relation,
+		m.ID, m.FromKind, m.FromID, m.ToKind, m.ToID, m.Relation,
 		m.CreatedAt.Format(time.RFC3339Nano))
 	if err != nil {
 		return memory.Memory{}, fmt.Errorf("graph: write: %w", err)

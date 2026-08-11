@@ -79,6 +79,33 @@ func TestWritePersistsARowReadableDirectly(t *testing.T) {
 	}
 }
 
+func TestWritePersistsFromKindAndToKind(t *testing.T) {
+	s := open(t)
+	ctx := context.Background()
+
+	out, err := s.Write(ctx, memory.Memory{
+		Kind:     memory.KindGraph,
+		FromID:   "okf-abc",
+		FromKind: "okf",
+		ToID:     "vector-def",
+		ToKind:   "vector",
+		Relation: "supports",
+	})
+	if err != nil {
+		t.Fatalf("Write: %v", err)
+	}
+
+	var fromKind, toKind string
+	row := s.db.QueryRowContext(ctx,
+		"SELECT from_kind, to_kind FROM graph_edges WHERE id = ?", out.ID)
+	if err := row.Scan(&fromKind, &toKind); err != nil {
+		t.Fatalf("direct read: %v", err)
+	}
+	if fromKind != "okf" || toKind != "vector" {
+		t.Errorf("got (from_kind=%q, to_kind=%q), want (okf, vector)", fromKind, toKind)
+	}
+}
+
 func TestWriteKeepsAGivenID(t *testing.T) {
 	s := open(t)
 	out, err := s.Write(context.Background(), memory.Memory{

@@ -28,9 +28,11 @@ const (
 	KindGraph Kind = "graph"
 )
 
-// Memory is one unit of stored memory, either layer. FromID, ToID and Relation are only
-// meaningful when Kind == KindGraph — they express one edge between two existing memories
-// (referenced by their .okf/vector IDs), not a new content-bearing memory.
+// Memory is one unit of stored memory, either layer. FromID, FromKind, ToID, ToKind and
+// Relation are only meaningful when Kind == KindGraph — they express one edge between two
+// existing memories (referenced by their .okf/vector IDs, disambiguated by which layer each
+// one lives in — an id has no shared namespace across layers), not a new content-bearing
+// memory.
 type Memory struct {
 	ID        string
 	Kind      Kind
@@ -39,7 +41,9 @@ type Memory struct {
 	Metadata  map[string]string
 	CreatedAt time.Time
 	FromID    string
+	FromKind  string
 	ToID      string
+	ToKind    string
 	Relation  string
 }
 
