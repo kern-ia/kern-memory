@@ -3,12 +3,12 @@ type: Issue
 title: "Add graph store: schema and Write"
 description: "New internal/memory/graph package: SQLite schema for graph_edges and a Write implementation with Relation validation."
 tags: [epic-1]
-timestamp: 2026-08-11T16:45:00Z
+timestamp: 2026-08-11T16:36:04Z
 epic: 1
 issue: 2
 slug: graph-store-write
 size: M
-status: pr-open
+status: done
 gh_issue: 7
 gh_pr: 12
 resource: https://github.com/kern-ia/kern-memory/issues/7
