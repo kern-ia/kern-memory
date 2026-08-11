@@ -8,6 +8,7 @@ okf_version: "0.1"
 * [Scope](SCOPE.md) - phase 2: graph/relationship layer + AvelFinances content population.
 * [Specs](SPECS.md) - graph storage schema and interface contract for phase 2.
 * [Conventions](CONVENTIONS.md) - personal baseline + 2 project deviations from root CONVENTIONS.md.
+* [Drift](DRIFT.md) - 1 entry, resolved: Epic 1's PresidioGo→kern-anon module rename.
 
 # Subdirectories
 

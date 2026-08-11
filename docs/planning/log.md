@@ -1,5 +1,14 @@
 # Planning bundle — update log
 
+## 2026-08-11
+* **Creation**: [DRIFT.md](DRIFT.md), promoted from Epic 1's close (`close-epic`).
+  One entry: `go.mod`'s PresidioGo pin fell behind Kern-Anon's module rename,
+  contradicting `CONVENTIONS.md`'s "mirror it here in the same PR" rule — already
+  resolved via PR #17 by the time it was promoted.
+* **Update**: [CONVENTIONS.md](CONVENTIONS.md)'s Dependencies section corrected to
+  the current module name (`github.com/kern-ia/kern-anon`), linking the drift entry
+  above.
+
 ## 2026-08-10 (3)
 * **Creation**: [CONVENTIONS.md](CONVENTIONS.md), via the `conventions/` decision
   ledger (2 deviations, both decided at triage; everything else is the personal

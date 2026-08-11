@@ -1,5 +1,11 @@
 # Epics bundle — update log
 
+## 2026-08-11 (10)
+* **Closed**: [close-epic] Epic 1: Graph layer. Milestone 1 and tracking issue
+  [#3](https://github.com/kern-ia/kern-memory/issues/3) closed. Drift promoted to
+  `docs/planning/DRIFT.md` (1 entry, resolved). 6 worktrees and their local/remote
+  branches cleaned up. Epic 2 (AvelFinances content population) is now unblocked.
+
 ## 2026-08-11 (9)
 * **PR opened**: [drift fix] Kern-Anon module rename (github.com/YoLaub/PresidioGo →
   github.com/kern-ia/kern-anon) — Updated go.mod and all imports in
