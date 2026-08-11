@@ -3,7 +3,7 @@ type: Issue
 title: "Add graph store Query: single-hop and clamped multi-hop traversal"
 description: "Query on the graph store, backed by a recursive SQL traversal, with a server-side depth cap."
 tags: [epic-1]
-timestamp: 2026-08-11T17:30:00Z
+timestamp: 2026-08-11T18:00:00Z
 epic: 1
 issue: 3
 slug: graph-store-query-traversal
