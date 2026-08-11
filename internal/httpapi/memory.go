@@ -55,6 +55,14 @@ type memoryWriteRequest struct {
 	Text     string            `json:"text"`
 	Tags     []string          `json:"tags"`
 	Metadata map[string]string `json:"metadata"`
+	// FromKind/FromID/ToKind/ToID/Relation (Epic 1) are only meaningful when
+	// Kind == "graph" — they describe one directed edge between two existing
+	// memories. See memory.Memory's doc comment.
+	FromKind string `json:"from_kind"`
+	FromID   string `json:"from_id"`
+	ToKind   string `json:"to_kind"`
+	ToID     string `json:"to_id"`
+	Relation string `json:"relation"`
 }
 
 type memoryDTO struct {
@@ -63,6 +71,11 @@ type memoryDTO struct {
 	Text     string            `json:"text"`
 	Tags     []string          `json:"tags"`
 	Metadata map[string]string `json:"metadata"`
+	FromKind string            `json:"from_kind,omitempty"`
+	FromID   string            `json:"from_id,omitempty"`
+	ToKind   string            `json:"to_kind,omitempty"`
+	ToID     string            `json:"to_id,omitempty"`
+	Relation string            `json:"relation,omitempty"`
 }
 
 func (s *memoryServer) handleWrite(w http.ResponseWriter, r *http.Request) {
@@ -71,13 +84,17 @@ func (s *memoryServer) handleWrite(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "malformed body: want {\"kind\",\"text\",...}")
 		return
 	}
-	if strings.TrimSpace(req.Text) == "" {
+	// A graph edge has no text of its own — it's a reference (FromID/ToID/Relation)
+	// between two memories that already carry their own text. Every other kind still
+	// requires text.
+	if req.Kind != string(memory.KindGraph) && strings.TrimSpace(req.Text) == "" {
 		writeError(w, http.StatusBadRequest, "text is required")
 		return
 	}
 
 	out, err := s.store.Write(r.Context(), memory.Memory{
 		ID: req.ID, Kind: memory.Kind(req.Kind), Text: req.Text, Tags: req.Tags, Metadata: req.Metadata,
+		FromKind: req.FromKind, FromID: req.FromID, ToKind: req.ToKind, ToID: req.ToID, Relation: req.Relation,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
@@ -85,6 +102,7 @@ func (s *memoryServer) handleWrite(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, memoryDTO{
 		ID: out.ID, Kind: string(out.Kind), Text: out.Text, Tags: out.Tags, Metadata: out.Metadata,
+		FromKind: out.FromKind, FromID: out.FromID, ToKind: out.ToKind, ToID: out.ToID, Relation: out.Relation,
 	})
 }
 
@@ -93,6 +111,12 @@ type memoryQueryRequest struct {
 	Kind  string   `json:"kind"`
 	Tags  []string `json:"tags"`
 	Limit int      `json:"limit"`
+	// FromKind/FromID/Depth (Epic 1) are only meaningful when Kind == "graph" — they
+	// name the traversal's starting node and how many hops to walk. See memory.Query's
+	// doc comment.
+	FromKind string `json:"from_kind"`
+	FromID   string `json:"from_id"`
+	Depth    int    `json:"depth"`
 }
 
 type recallDTO struct {
@@ -109,6 +133,7 @@ func (s *memoryServer) handleQuery(w http.ResponseWriter, r *http.Request) {
 
 	recalls, err := s.store.Query(r.Context(), memory.Query{
 		Text: req.Text, Kind: memory.Kind(req.Kind), Tags: req.Tags, Limit: req.Limit,
+		FromKind: req.FromKind, FromID: req.FromID, Depth: req.Depth,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
@@ -120,6 +145,8 @@ func (s *memoryServer) handleQuery(w http.ResponseWriter, r *http.Request) {
 			Memory: memoryDTO{
 				ID: rec.Memory.ID, Kind: string(rec.Memory.Kind), Text: rec.Memory.Text,
 				Tags: rec.Memory.Tags, Metadata: rec.Memory.Metadata,
+				FromKind: rec.Memory.FromKind, FromID: rec.Memory.FromID,
+				ToKind: rec.Memory.ToKind, ToID: rec.Memory.ToID, Relation: rec.Memory.Relation,
 			},
 			Similarity: rec.Similarity,
 		}
