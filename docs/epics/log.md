@@ -1,5 +1,25 @@
 # Epics bundle — update log
 
+## 2026-08-11 (4)
+* **PR opened**: [implement-issue] Epic 1 issue 2 (graph store write,
+  [#7](https://github.com/kern-ia/kern-memory/issues/7)) — new
+  `internal/memory/graph` package: `Open` creates `graph_edges`
+  (idempotent), `Write` persists a directed edge with a generated id and
+  validates `Relation` as a label (non-empty, ≤64 bytes, no newline).
+  `go test -race ./internal/memory/graph/...` green (7/7).
+  [PR #12](https://github.com/kern-ia/kern-memory/pull/12) against `dev`.
+
+## 2026-08-11 (3)
+* **Started**: [implement-issue] Epic 1 issue 2 (graph store write,
+  [#7](https://github.com/kern-ia/kern-memory/issues/7)) — branch
+  `issue-7-graph-store-write`.
+
+## 2026-08-11 (2)
+* **Reconcile**: [implement-issue] Epic 1 issue 1 (contract & routing,
+  [#6](https://github.com/kern-ia/kern-memory/issues/6)) merged via
+  [PR #11](https://github.com/kern-ia/kern-memory/pull/11) into `dev` — status flipped
+  to `done`. Issue #6 already closed on GitHub.
+
 ## 2026-08-11
 * **PR opened**: [implement-issue] Epic 1 issue 1 (contract & routing,
   [#6](https://github.com/kern-ia/kern-memory/issues/6)) — Router gains a `Graph`
