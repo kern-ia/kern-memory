@@ -150,6 +150,29 @@ func TestHandleMemoryWriteThreadsGraphEdgeFields(t *testing.T) {
 	}
 }
 
+func TestHandleMemoryWriteAllowsAGraphEdgeWithNoText(t *testing.T) {
+	mem := &fakeMemoryStore{}
+	body, _ := json.Marshal(map[string]any{
+		"kind":      "graph",
+		"from_kind": "okf",
+		"from_id":   "fact-1",
+		"to_kind":   "vector",
+		"to_id":     "vec-1",
+		"relation":  "supports",
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/memory/write", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	NewMemoryRouter(mem, "").ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s, want 200 — a graph edge has no text of its own", rec.Code, rec.Body.String())
+	}
+	if len(mem.written) != 1 {
+		t.Fatalf("written = %v, want 1 entry", mem.written)
+	}
+}
+
 func TestHandleMemoryQueryThreadsGraphTraversalFields(t *testing.T) {
 	mem := &fakeMemoryStore{recalls: []memory.Recall{
 		{Memory: memory.Memory{ID: "e1", Kind: memory.KindGraph, FromKind: "okf", FromID: "fact-1", ToKind: "vector", ToID: "vec-1", Relation: "supports"}, Similarity: 1},

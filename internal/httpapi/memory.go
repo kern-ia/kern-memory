@@ -84,7 +84,10 @@ func (s *memoryServer) handleWrite(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "malformed body: want {\"kind\",\"text\",...}")
 		return
 	}
-	if strings.TrimSpace(req.Text) == "" {
+	// A graph edge has no text of its own — it's a reference (FromID/ToID/Relation)
+	// between two memories that already carry their own text. Every other kind still
+	// requires text.
+	if req.Kind != string(memory.KindGraph) && strings.TrimSpace(req.Text) == "" {
 		writeError(w, http.StatusBadRequest, "text is required")
 		return
 	}
