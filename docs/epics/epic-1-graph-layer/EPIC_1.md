@@ -6,7 +6,7 @@ tags: [epic]
 timestamp: 2026-08-10T10:00:00Z
 epic: 1
 slug: graph-layer
-status: open
+status: done
 gh_issue: 3
 milestone: 1
 resource: https://github.com/kern-ia/kern-memory/issues/3

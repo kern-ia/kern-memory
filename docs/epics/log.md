@@ -16,12 +16,36 @@
   [PR #15](https://github.com/kern-ia/kern-memory/pull/15) against `dev`.
 
 ## 2026-08-11 (7)
+* **Reconcile**: Epic 1 complete. All 4 issues merged into `dev`:
+  [#6](https://github.com/kern-ia/kern-memory/issues/6) via
+  [PR #11](https://github.com/kern-ia/kern-memory/pull/11),
+  [#7](https://github.com/kern-ia/kern-memory/issues/7) via
+  [PR #12](https://github.com/kern-ia/kern-memory/pull/12),
+  [#8](https://github.com/kern-ia/kern-memory/issues/8) via
+  [PR #14](https://github.com/kern-ia/kern-memory/pull/14),
+  [#9](https://github.com/kern-ia/kern-memory/issues/9) via
+  [PR #15](https://github.com/kern-ia/kern-memory/pull/15).
+  All GitHub issues closed. Bundle status flipped to `done`.
+
+## 2026-08-11 (6.5)
 * **Reconcile**: [implement-issue] Epic 1 issue 3 (graph store query/traversal,
   [#8](https://github.com/kern-ia/kern-memory/issues/8)) merged via
   [PR #14](https://github.com/kern-ia/kern-memory/pull/14) into `dev` — status flipped
   to `done`. Issue #8 already closed on GitHub.
 
 ## 2026-08-11 (6)
+* **Reconcile**: [implement-issue] Epic 1 issue 3 (graph store query/traversal,
+  [#8](https://github.com/kern-ia/kern-memory/issues/8)) merged via
+  [PR #14](https://github.com/kern-ia/kern-memory/pull/14) into `dev` — status flipped
+  to `done`. Issue #8 already closed on GitHub.
+
+## 2026-08-11 (5.5)
+* **Reconcile**: [implement-issue] Epic 1 issue 4 (HTTP wiring & real-daemon
+  verification, [#9](https://github.com/kern-ia/kern-memory/issues/9)) merged via
+  [PR #15](https://github.com/kern-ia/kern-memory/pull/15) into `dev` — status flipped
+  to `done`. Issue #9 already closed on GitHub.
+
+## 2026-08-11 (5)
 * **PR opened**: [implement-issue] Epic 1 issue 3 (graph store query/traversal,
   [#8](https://github.com/kern-ia/kern-memory/issues/8)) — `Query` on
   `internal/memory/graph`: `Depth <= 1` returns direct edges only, `Depth > 1`

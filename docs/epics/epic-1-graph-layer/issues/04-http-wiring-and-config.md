@@ -8,7 +8,7 @@ epic: 1
 issue: 4
 slug: http-wiring-and-config
 size: S
-status: pr-open
+status: done
 gh_issue: 9
 gh_pr: 15
 resource: https://github.com/kern-ia/kern-memory/issues/9
