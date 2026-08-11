@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"strings"
 	"testing"
+	"time"
 
 	_ "modernc.org/sqlite"
 
@@ -150,6 +151,140 @@ func TestWriteRejectsARelationContainingANewline(t *testing.T) {
 		t.Fatal("expected an error for a Relation containing a newline")
 	}
 	assertNoRows(t, s.db)
+}
+
+func writeEdge(t *testing.T, s *Store, fromKind, fromID, toKind, toID, relation string) {
+	t.Helper()
+	if _, err := s.Write(context.Background(), memory.Memory{
+		FromKind: fromKind, FromID: fromID, ToKind: toKind, ToID: toID, Relation: relation,
+	}); err != nil {
+		t.Fatalf("seed Write(%s->%s): %v", fromID, toID, err)
+	}
+}
+
+func hasEdgeTo(recalls []memory.Recall, toID string) bool {
+	for _, r := range recalls {
+		if r.Memory.ToID == toID {
+			return true
+		}
+	}
+	return false
+}
+
+func TestQueryDirectEdgeIsReturnedForDepthUnsetOrOne(t *testing.T) {
+	s := open(t)
+	writeEdge(t, s, "okf", "a", "okf", "b", "supports")
+
+	for _, depth := range []int{0, 1} {
+		out, err := s.Query(context.Background(), memory.Query{
+			Kind: memory.KindGraph, FromKind: "okf", FromID: "a", Depth: depth,
+		})
+		if err != nil {
+			t.Fatalf("Query(Depth=%d): %v", depth, err)
+		}
+		if !hasEdgeTo(out, "b") {
+			t.Errorf("Depth=%d: expected an edge to %q, got %+v", depth, "b", out)
+		}
+	}
+}
+
+func TestQueryDepth2ReachesTwoHopsButDepth1DoesNot(t *testing.T) {
+	s := open(t)
+	writeEdge(t, s, "okf", "a", "okf", "b", "rel")
+	writeEdge(t, s, "okf", "b", "okf", "c", "rel")
+
+	out1, err := s.Query(context.Background(), memory.Query{FromKind: "okf", FromID: "a", Depth: 1})
+	if err != nil {
+		t.Fatalf("Query(Depth=1): %v", err)
+	}
+	if hasEdgeTo(out1, "c") {
+		t.Errorf("Depth=1: expected NOT to reach c, got %+v", out1)
+	}
+
+	out2, err := s.Query(context.Background(), memory.Query{FromKind: "okf", FromID: "a", Depth: 2})
+	if err != nil {
+		t.Fatalf("Query(Depth=2): %v", err)
+	}
+	if !hasEdgeTo(out2, "c") {
+		t.Errorf("Depth=2: expected to reach c, got %+v", out2)
+	}
+}
+
+// TestQueryDepthAboveMaxIsClampedToTheServerSideMax proves the server-side depth clamp
+// itself, not just that a large Depth doesn't crash: it builds a chain one hop longer than
+// maxDepth and shows that asking for a Depth far beyond maxDepth (100) returns exactly the
+// same edges as asking for maxDepth — the extra hop past the cap is never reached. If the
+// clamp (min(q.Depth, maxDepth)) were removed, Depth: 100 would walk the whole chain and
+// this test would fail by finding the extra node.
+func TestQueryDepthAboveMaxIsClampedToTheServerSideMax(t *testing.T) {
+	s := open(t)
+	// Chain of maxDepth+1 hops: a -> b -> c -> d -> e (maxDepth == 3, so "e" sits 4 hops
+	// from "a" — one hop past the cap).
+	writeEdge(t, s, "okf", "a", "okf", "b", "rel")
+	writeEdge(t, s, "okf", "b", "okf", "c", "rel")
+	writeEdge(t, s, "okf", "c", "okf", "d", "rel")
+	writeEdge(t, s, "okf", "d", "okf", "e", "rel")
+
+	atMax, err := s.Query(context.Background(), memory.Query{FromKind: "okf", FromID: "a", Depth: maxDepth})
+	if err != nil {
+		t.Fatalf("Query(Depth=maxDepth): %v", err)
+	}
+	aboveMax, err := s.Query(context.Background(), memory.Query{FromKind: "okf", FromID: "a", Depth: 100})
+	if err != nil {
+		t.Fatalf("Query(Depth=100): %v", err)
+	}
+
+	if len(atMax) != len(aboveMax) {
+		t.Fatalf("clamp not applied: Depth=maxDepth got %d edges, Depth=100 got %d edges", len(atMax), len(aboveMax))
+	}
+	if hasEdgeTo(aboveMax, "e") {
+		t.Errorf("clamp not applied: Depth=100 reached %q, which is one hop past maxDepth=%d", "e", maxDepth)
+	}
+}
+
+// TestQueryOnACyclicGraphTerminates proves the recursive traversal is cycle-safe: a naive
+// WITH RECURSIVE walk with no depth bound would loop forever on this 2-node cycle. The
+// depth-bounded recursion (WHERE hop < depth in the recursive term) guarantees termination
+// after a fixed number of steps regardless of graph structure — this test fails by timeout
+// (not by a wrong answer) if that guarantee is ever lost.
+func TestQueryOnACyclicGraphTerminates(t *testing.T) {
+	s := open(t)
+	writeEdge(t, s, "okf", "a", "okf", "b", "rel")
+	writeEdge(t, s, "okf", "b", "okf", "a", "rel")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	done := make(chan struct{})
+	var out []memory.Recall
+	var err error
+	go func() {
+		out, err = s.Query(ctx, memory.Query{FromKind: "okf", FromID: "a", Depth: 1000})
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		if err != nil {
+			t.Fatalf("Query on cyclic graph: %v", err)
+		}
+		if !hasEdgeTo(out, "b") {
+			t.Errorf("expected to reach b, got %+v", out)
+		}
+	case <-ctx.Done():
+		t.Fatal("Query on a cyclic graph did not terminate within 5s — depth clamp/cycle-safety broken")
+	}
+}
+
+func TestQueryOnANodeWithNoEdgesReturnsEmptyNotError(t *testing.T) {
+	s := open(t)
+	out, err := s.Query(context.Background(), memory.Query{FromKind: "okf", FromID: "lonely", Depth: 3})
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	if len(out) != 0 {
+		t.Errorf("expected empty result, got %+v", out)
+	}
 }
 
 func assertNoRows(t *testing.T, db *sql.DB) {

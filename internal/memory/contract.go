@@ -48,15 +48,20 @@ type Memory struct {
 }
 
 // Query asks for recall. An empty Kind fans out to every layer (Router.Query merges and
-// sorts by Similarity); a set Kind restricts to one layer. Depth is only meaningful when
-// Kind == KindGraph — it bounds a multi-hop traversal (the graph layer clamps it to a
-// hard server-side maximum regardless of what the caller requests).
+// sorts by Similarity); a set Kind restricts to one layer. FromKind, FromID and Depth are
+// only meaningful when Kind == KindGraph: FromKind/FromID identify the traversal's
+// starting node (the same (kind, id) composite Memory uses to reference a memory across
+// layers — see contract 05), and Depth bounds how many hops the traversal walks from
+// there (the graph layer clamps it to a hard server-side maximum regardless of what the
+// caller requests).
 type Query struct {
-	Text  string
-	Kind  Kind
-	Tags  []string
-	Limit int
-	Depth int
+	Text     string
+	Kind     Kind
+	Tags     []string
+	Limit    int
+	FromKind string
+	FromID   string
+	Depth    int
 }
 
 // Recall is one Query result. Similarity is the vector layer's cosine similarity ([-1,1]);
