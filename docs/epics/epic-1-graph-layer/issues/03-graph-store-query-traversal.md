@@ -3,12 +3,12 @@ type: Issue
 title: "Add graph store Query: single-hop and clamped multi-hop traversal"
 description: "Query on the graph store, backed by a recursive SQL traversal, with a server-side depth cap."
 tags: [epic-1]
-timestamp: 2026-08-10T11:00:00Z
+timestamp: 2026-08-11T17:00:00Z
 epic: 1
 issue: 3
 slug: graph-store-query-traversal
 size: M
-status: open
+status: in-progress
 gh_issue: 8
 resource: https://github.com/kern-ia/kern-memory/issues/8
 depends_on: [graph-store-write]

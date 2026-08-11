@@ -1,5 +1,11 @@
 # Epics bundle — update log
 
+## 2026-08-11 (5)
+* **Reconcile**: [implement-issue] Epic 1 issue 2 (graph store write,
+  [#7](https://github.com/kern-ia/kern-memory/issues/7)) merged via
+  [PR #12](https://github.com/kern-ia/kern-memory/pull/12) into `dev` — status flipped
+  to `done`. Issue #7 already closed on GitHub.
+
 ## 2026-08-11 (4)
 * **PR opened**: [implement-issue] Epic 1 issue 2 (graph store write,
   [#7](https://github.com/kern-ia/kern-memory/issues/7)) — new
