@@ -1,5 +1,12 @@
 # Epics bundle — update log
 
+## 2026-08-12 (Reconcile)
+* **Reconcile**: [implement-issue] Epic 2 issue 3 (end-to-end recall verification,
+  [#21](https://github.com/kern-ia/kern-memory/issues/21)) merged via
+  [PR #25](https://github.com/kern-ia/kern-memory/pull/25) into `dev` — status flipped
+  to `done`. Issue #21 already closed on GitHub. Epic 2 complete: all three issues
+  (#19, #20, #21) merged and closed.
+
 ## 2026-08-12
 * **PR opened**: [implement-issue] Epic 2 issue 3 (end-to-end recall verification,
   [#21](https://github.com/kern-ia/kern-memory/issues/21)) — last issue in Epic 2.
