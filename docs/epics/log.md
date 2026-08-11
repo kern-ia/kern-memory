@@ -1,5 +1,10 @@
 # Epics bundle — update log
 
+## 2026-08-11 (17)
+* **Started**: [implement-issue] Epic 2 issue 3 (end-to-end recall verification,
+  [#21](https://github.com/kern-ia/kern-memory/issues/21)) — branch
+  `issue-21-end-to-end-recall-verification`. Last issue in Epic 2.
+
 ## 2026-08-11 (16)
 * **Reconcile**: [implement-issue] Epic 2 issue 2 (simulated bank-criteria content,
   [#20](https://github.com/kern-ia/kern-memory/issues/20)) merged via

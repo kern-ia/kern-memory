@@ -3,12 +3,12 @@ type: Issue
 title: "Verify end-to-end recall against the simulated content"
 description: "A real prospect-style question against the simulated bank-criteria content, single-hop and multi-hop, with a documented process to repeat once real content replaces it."
 tags: [epic-2]
-timestamp: 2026-08-12T09:00:00Z
+timestamp: 2026-08-11T23:57:00Z
 epic: 2
 issue: 3
 slug: end-to-end-recall-verification
 size: S
-status: open
+status: pr-open
 gh_issue: 21
 resource: https://github.com/kern-ia/kern-memory/issues/21
 depends_on: [simulated-bank-criteria-content]
@@ -45,14 +45,14 @@ content still works" is part of that, not a one-off check.
 - Any change to the memory layers' code — this issue verifies, it doesn't implement.
 
 ## Acceptance criteria / Definition of done
-- [ ] At least 2 prospect-style questions correctly recall their matching criteria
+- [x] At least 2 prospect-style questions correctly recall their matching criteria
       via `kind=vector` (or empty-`kind` fan-out) query, with similarity scores
       pasted into the PR — mirroring phase 1's own retro
       (`docs/index/0002-epic13-phase1.md`'s "0,83 vs 0,56" style evidence).
-  - [ ] At least 1 graph traversal (`kind=graph`) correctly recalls a relationship
+  - [x] At least 1 graph traversal (`kind=graph`) correctly recalls a relationship
       between two loaded criteria.
-- [ ] `verification.md` runbook committed, containing the literal commands used.
-- [ ] Real daemon, real curl — no mocking, consistent with this repo's established
+- [x] `verification.md` runbook committed, containing the literal commands used.
+- [x] Real daemon, real curl — no mocking, consistent with this repo's established
       practice.
 
 ## Relevant files / areas
