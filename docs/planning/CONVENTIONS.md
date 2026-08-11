@@ -65,9 +65,11 @@ log-facing errors are different audiences — write both where both exist.
 ## Dependencies
 Prefer the standard library; a new dependency needs a one-line justification in the PR
 that adds it. Pin or lock everything the ecosystem lets you lock. Go module path:
-`github.com/yoann/kern-memory`, depends on `github.com/YoLaub/PresidioGo`
-(`kern-anon`'s pre-rename name, replaced locally via `replace ... => ../Kern-Anon`) — if
-`kern-anon` renames its module, mirror it here in the same PR, not afterward.
+`github.com/yoann/kern-memory`, depends on `github.com/kern-ia/kern-anon` (replaced
+locally via `replace ... => ../Kern-Anon`) — if `kern-anon` renames its module again,
+mirror it here in the same PR, not afterward
+([drift](/DRIFT.md#01--gomods-presidiogo-pin-fell-behind-kern-anons-module-rename):
+missed on the first rename, caught and fixed during Epic 1).
 
 ## Documentation & comments
 Code comments only for constraints the code can't show (invariants, workarounds,
