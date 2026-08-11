@@ -1,5 +1,30 @@
 # Epics bundle — update log
 
+## 2026-08-11 (15)
+* **PR opened**: [implement-issue] Epic 2 issue 2 (simulated bank-criteria content,
+  [#20](https://github.com/kern-ia/kern-memory/issues/20)) — 10 fictional
+  bank-lending-criteria memories (age, SCI eligibility, income, property type,
+  guarantee) and 4 graph edges relating them, authored against issue 1's
+  `load-memory` format. Verified against a real `kern-memory serve` + real Ollama
+  embeddings: `load-memory` loaded 10 memories + 4 edges, three French-language
+  vector queries each returned the correct criterion as top hit, one graph query
+  returned the expected edge. Content clearly marked fictional (`_disclaimer`
+  field, `fictional-avelfinances-content` tag, `content/README.md`); bank names
+  transparently invented. `go test -race -count=1 ./...` green (9/9 packages,
+  content-only change, no Go code touched). [PR #24](https://github.com/kern-ia/kern-memory/pull/24)
+  against `dev`.
+
+## 2026-08-11 (14)
+* **Started**: [implement-issue] Epic 2 issue 2 (simulated bank-criteria content,
+  [#20](https://github.com/kern-ia/kern-memory/issues/20)) — branch
+  `issue-20-simulated-bank-criteria-content`.
+
+## 2026-08-11 (13)
+* **Reconcile**: [implement-issue] Epic 2 issue 1 (editable content format & loader CLI,
+  [#19](https://github.com/kern-ia/kern-memory/issues/19)) merged via
+  [PR #23](https://github.com/kern-ia/kern-memory/pull/23) into `dev` — status flipped
+  to `done`. Issue #19 already closed on GitHub.
+
 ## 2026-08-11 (12)
 * **PR opened**: [implement-issue] Epic 2 issue 1 (editable content format & loader CLI,
   [#19](https://github.com/kern-ia/kern-memory/issues/19)) — new

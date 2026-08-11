@@ -1,0 +1,109 @@
+{
+  "_disclaimer": "SIMULATED / FICTIONAL CONTENT. Every bank name, criterion, threshold and number in this file is invented for epic-2 issue 2 (https://github.com/kern-ia/kern-memory/issues/20). AvelFinances' real bank-lending criteria are confidential and not available to this repo. Nothing here is real client data, real bank policy, or production content — do not treat it as such. This field is not part of the load-memory format (cmd/kern-memory/loadmemory.go's loadFile struct only reads `memories` and `edges`) and is ignored by the parser; it exists purely so a human opening this file sees the disclaimer first.",
+  "memories": [
+    {
+      "id": "criterion-age-senior-general",
+      "kind": "vector",
+      "text": "Banque Solstice Fictive : pour un prêt hypothécaire souscrit en nom propre, l'emprunteur ne doit pas dépasser 70 ans à la fin du remboursement prévu. Au-delà, une surprime d'assurance emprunteur est exigée et le dossier passe en étude manuelle.",
+      "tags": ["bank-criteria", "age", "insurance", "fictional-avelfinances-content"],
+      "metadata": {"bank": "Banque Solstice Fictive", "category": "age-limit", "fictional": "true"}
+    },
+    {
+      "id": "criterion-age-senior-sci",
+      "kind": "vector",
+      "text": "Banque Solstice Fictive : lorsque l'emprunt est porté par une SCI et non par une personne physique, la limite d'âge de 70 ans ne s'applique pas à l'associé le plus âgé — c'est la solidité financière de la société civile qui est évaluée, pas l'âge de ses associés.",
+      "tags": ["bank-criteria", "age", "sci", "fictional-avelfinances-content"],
+      "metadata": {"bank": "Banque Solstice Fictive", "category": "age-limit", "fictional": "true"}
+    },
+    {
+      "id": "criterion-sci-min-shareholders",
+      "kind": "vector",
+      "text": "Crédit Meridian Fictif : une SCI emprunteuse doit compter au moins deux associés au moment de la demande. Une SCI unipersonnelle est refusée d'office, quel que soit le montant du bien.",
+      "tags": ["bank-criteria", "sci", "fictional-avelfinances-content"],
+      "metadata": {"bank": "Crédit Meridian Fictif", "category": "sci-eligibility", "fictional": "true"}
+    },
+    {
+      "id": "criterion-sci-income-history",
+      "kind": "vector",
+      "text": "Crédit Meridian Fictif : pour une SCI qui met le bien en location, trois années de revenus locatifs déclarés sont exigées avant l'octroi. Une SCI récente sans historique locatif doit fournir une caution personnelle de chaque associé.",
+      "tags": ["bank-criteria", "sci", "income", "fictional-avelfinances-content"],
+      "metadata": {"bank": "Crédit Meridian Fictif", "category": "sci-eligibility", "fictional": "true"}
+    },
+    {
+      "id": "criterion-income-employed-standard",
+      "kind": "vector",
+      "text": "Banque Arcadelle Fictive : pour un emprunteur salarié en CDI, le taux d'endettement ne doit pas dépasser 35% des revenus nets, charges comprises, calculé sur les trois derniers bulletins de salaire.",
+      "tags": ["bank-criteria", "income", "salaried", "fictional-avelfinances-content"],
+      "metadata": {"bank": "Banque Arcadelle Fictive", "category": "debt-to-income", "fictional": "true"}
+    },
+    {
+      "id": "criterion-income-self-employed",
+      "kind": "vector",
+      "text": "Banque Arcadelle Fictive : pour un emprunteur indépendant ou gérant non-salarié, trois liasses fiscales complètes sont exigées et le taux d'endettement plafond est abaissé à 30% pour tenir compte de la variabilité des revenus.",
+      "tags": ["bank-criteria", "income", "self-employed", "fictional-avelfinances-content"],
+      "metadata": {"bank": "Banque Arcadelle Fictive", "category": "debt-to-income", "fictional": "true"}
+    },
+    {
+      "id": "criterion-property-primary-residence",
+      "kind": "vector",
+      "text": "Banque Solstice Fictive : un prêt pour résidence principale bénéficie d'un taux préférentiel et d'un apport minimum réduit à 10% du prix du bien, contre 20% pour un investissement locatif.",
+      "tags": ["bank-criteria", "property-type", "fictional-avelfinances-content"],
+      "metadata": {"bank": "Banque Solstice Fictive", "category": "property-type", "fictional": "true"}
+    },
+    {
+      "id": "criterion-property-rental-investment",
+      "kind": "vector",
+      "text": "Banque Solstice Fictive : un investissement locatif exige un apport personnel d'au moins 20% du prix du bien et n'est finançable qu'à hauteur de 80% de la valeur, hors frais de notaire.",
+      "tags": ["bank-criteria", "property-type", "fictional-avelfinances-content"],
+      "metadata": {"bank": "Banque Solstice Fictive", "category": "property-type", "fictional": "true"}
+    },
+    {
+      "id": "criterion-property-new-construction",
+      "kind": "vector",
+      "text": "Crédit Meridian Fictif : pour un bien en VEFA (vente en l'état futur d'achèvement), les fonds sont débloqués par paliers selon l'avancement des travaux, et non versés en une seule fois à la signature.",
+      "tags": ["bank-criteria", "property-type", "vefa", "fictional-avelfinances-content"],
+      "metadata": {"bank": "Crédit Meridian Fictif", "category": "property-type", "fictional": "true"}
+    },
+    {
+      "id": "criterion-guarantee-caution-vs-hypotheque",
+      "kind": "vector",
+      "text": "Banque Arcadelle Fictive : en dessous de 250 000 euros empruntés, une caution mutuelle suffit comme garantie. Au-delà, ou pour un investissement locatif via SCI, une hypothèque conventionnelle est exigée en plus de la caution.",
+      "tags": ["bank-criteria", "guarantee", "fictional-avelfinances-content"],
+      "metadata": {"bank": "Banque Arcadelle Fictive", "category": "guarantee", "fictional": "true"}
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-age-sci-supersedes-age-general",
+      "from_kind": "vector",
+      "from_id": "criterion-age-senior-sci",
+      "to_kind": "vector",
+      "to_id": "criterion-age-senior-general",
+      "relation": "supersedes-when-borrower-is-sci"
+    },
+    {
+      "id": "edge-sci-income-applies-when-sci-shareholders",
+      "from_kind": "vector",
+      "from_id": "criterion-sci-income-history",
+      "to_kind": "vector",
+      "to_id": "criterion-sci-min-shareholders",
+      "relation": "applies-only-if"
+    },
+    {
+      "id": "edge-rental-investment-applies-when-self-employed",
+      "from_kind": "vector",
+      "from_id": "criterion-property-rental-investment",
+      "to_kind": "vector",
+      "to_id": "criterion-income-self-employed",
+      "relation": "combines-with"
+    },
+    {
+      "id": "edge-guarantee-applies-when-rental-investment",
+      "from_kind": "vector",
+      "from_id": "criterion-guarantee-caution-vs-hypotheque",
+      "to_kind": "vector",
+      "to_id": "criterion-property-rental-investment",
+      "relation": "stricter-requirement-for"
+    }
+  ]
+}
