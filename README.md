@@ -46,6 +46,10 @@ network dependency, and only for the semantic layer.
   ONNX model is configured (opt-in, see Configuration) — organizations and locations are
   deliberately never masked, because a bank's name is exactly the kind of thing this store
   exists to recall, not PII to hide from itself.
+- **Editable content loading.** A JSON file holding a batch of memories and graph edges,
+  loaded with `load-memory` (below) — the same directness as `seed`, no HTTP round trip,
+  so content can be reviewed and re-loaded by editing a file rather than through
+  engineering-only tooling.
 
 ## What's coming
 
@@ -170,6 +174,38 @@ HTTP equivalent yet:
 ```
 
 Prints the generated id.
+
+## Load memory from a file
+
+The editable way to update memory content without an HTTP write path: edit a JSON file,
+re-run the command. Same category as `seed` (direct store calls, no HTTP round trip).
+
+```sh
+./bin/kern-memory load-memory path/to/content.json
+```
+
+File format — a batch of memories and the graph edges between them:
+
+```json
+{
+  "memories": [
+    {"id": "criterion-sci-senior", "kind": "vector", "text": "...", "tags": ["bank-criteria"], "metadata": {}}
+  ],
+  "edges": [
+    {"from_kind": "vector", "from_id": "criterion-a", "to_kind": "vector", "to_id": "criterion-b", "relation": "supersedes"}
+  ]
+}
+```
+
+`kind` per memory entry is `"okf"` or `"vector"` (empty defaults to `"vector"`, same as the
+HTTP write path). `id` is optional on both memories and edges; when given, the declarative
+(`.okf`) and semantic (vector) layers upsert on a repeat id, but the graph layer does not —
+a repeated explicit edge id errors (no `ON CONFLICT` clause on `graph_edges`), and an edge
+with no id (the format's own example above) gets a fresh id each run, so re-running the
+loader on an unchanged file **duplicates edges** rather than upserting them. This is a real
+gap in the graph layer, not a loader bug — see
+`internal/memory/graph/store_test.go`'s `TestWriteWithARepeatedGivenIDFailsRatherThanUpserting`
+and `TestRepeatedWriteWithNoIDCreatesASeparateEdgeNotAnUpsert`.
 
 ## Tests
 

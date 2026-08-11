@@ -1,5 +1,25 @@
 # Epics bundle — update log
 
+## 2026-08-11 (12)
+* **PR opened**: [implement-issue] Epic 2 issue 1 (editable content format & loader CLI,
+  [#19](https://github.com/kern-ia/kern-memory/issues/19)) — new
+  `kern-memory load-memory <file>` (`cmd/kern-memory/loadmemory.go`), mirroring
+  `runSeed`: parses a JSON file of memories + graph edges, writes each through the
+  same `Router` `openMemory` builds, no HTTP round trip. Verified per-layer upsert
+  behavior on a repeat write with the same id: `.okf` and vector both upsert cleanly
+  (`.okf`'s `ON CONFLICT DO UPDATE`, vector's `chromem-go` ID-keyed map); graph does
+  **not** — no `ON CONFLICT` on `graph_edges`, so a repeated explicit id errors and a
+  repeated blank id (the file format's own example) silently duplicates the edge.
+  Documented in README and two new graph tests rather than silently patched (storage
+  layer changes are out of scope for this epic). `go test -race -count=1 ./...` green
+  (83/83, all 9 packages). [PR #23](https://github.com/kern-ia/kern-memory/pull/23)
+  against `dev`.
+
+## 2026-08-11 (11)
+* **Started**: [implement-issue] Epic 2 issue 1 (editable content format & loader CLI,
+  [#19](https://github.com/kern-ia/kern-memory/issues/19)) — branch
+  `issue-19-editable-content-format-and-loader-cli`.
+
 ## 2026-08-12
 * **Creation**: [create-issues] Epic 2 (AvelFinances content population) broken into
   3 issues: [#19](https://github.com/kern-ia/kern-memory/issues/19) editable content
