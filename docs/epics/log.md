@@ -1,5 +1,16 @@
 # Epics bundle — update log
 
+## 2026-08-11 (6)
+* **PR opened**: [implement-issue] Epic 1 issue 3 (graph store query/traversal,
+  [#8](https://github.com/kern-ia/kern-memory/issues/8)) — `Query` on
+  `internal/memory/graph`: `Depth <= 1` returns direct edges only, `Depth > 1`
+  walks a `WITH RECURSIVE` traversal capped at a server-side `maxDepth` (3)
+  regardless of caller-requested `Depth`. `memory.Query` gains `FromKind`/
+  `FromID` to name the traversal's starting node. `go test -race
+  ./internal/memory/graph/...` green (13/13, 5 new); clamp test verified to
+  fail when the clamp is removed. [PR #14](https://github.com/kern-ia/kern-memory/pull/14)
+  against `dev`.
+
 ## 2026-08-11 (5)
 * **Reconcile**: [implement-issue] Epic 1 issue 2 (graph store write,
   [#7](https://github.com/kern-ia/kern-memory/issues/7)) merged via
