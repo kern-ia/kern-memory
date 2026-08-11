@@ -120,30 +120,38 @@ func TestWriteKeepsAGivenID(t *testing.T) {
 	}
 }
 
-// TestWriteWithARepeatedGivenIDFailsRatherThanUpserting documents a real gap found while
-// building epic-2 issue 1's load-memory loader: unlike okf.Store (ON CONFLICT DO UPDATE)
-// and vector.Store (ID-keyed map overwrite), graph_edges' schema has no ON CONFLICT clause,
-// so a second Write with the same explicit ID hits the PRIMARY KEY constraint and errors —
-// loudly, not silently, but it is not an upsert.
-func TestWriteWithARepeatedGivenIDFailsRatherThanUpserting(t *testing.T) {
+// TestWriteWithARepeatedGivenIDUpserts verifies the fix for a gap found while building
+// epic-2 issue 1's load-memory loader (issue #27): graph_edges now has an ON CONFLICT(id) DO
+// UPDATE clause, matching okf.Store and vector.Store — a second Write with the same explicit
+// ID overwrites the edge's fields rather than erroring on the PRIMARY KEY constraint.
+func TestWriteWithARepeatedGivenIDUpserts(t *testing.T) {
 	s := open(t)
 	ctx := context.Background()
 
 	if _, err := s.Write(ctx, memory.Memory{ID: "edge-1", FromID: "a", ToID: "b", Relation: "rel"}); err != nil {
 		t.Fatalf("first Write: %v", err)
 	}
+	if _, err := s.Write(ctx, memory.Memory{ID: "edge-1", FromID: "a", ToID: "c", Relation: "rel2"}); err != nil {
+		t.Fatalf("second Write (same ID): %v", err)
+	}
 
-	_, err := s.Write(ctx, memory.Memory{ID: "edge-1", FromID: "a", ToID: "c", Relation: "rel2"})
-	if err == nil {
-		t.Fatal("expected an error on a repeated explicit ID (graph_edges has no ON CONFLICT clause), got nil")
+	out, err := s.Query(ctx, memory.Query{FromID: "a"})
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	if len(out) != 1 {
+		t.Fatalf("got %d edges from a, want 1 (repeat ID must upsert, not duplicate)", len(out))
+	}
+	if out[0].Memory.ToID != "c" || out[0].Memory.Relation != "rel2" {
+		t.Errorf("got ToID=%q Relation=%q, want the second write's values (ToID=c, Relation=rel2) — upsert must overwrite, not ignore",
+			out[0].Memory.ToID, out[0].Memory.Relation)
 	}
 }
 
-// TestRepeatedWriteWithNoIDCreatesASeparateEdgeNotAnUpsert documents the other half of the
-// same gap: the load-memory file format's edge entries carry no id field (see the issue's
-// example), so a caller re-running the loader on an unchanged file leaves every edge's ID
-// empty — Write then generates a fresh random ID each time, and the same logical edge
-// accumulates as multiple rows rather than upserting.
+// TestRepeatedWriteWithNoIDCreatesASeparateEdgeNotAnUpsert documents intentional, consistent
+// behavior shared with okf.Store: when the caller supplies no ID, Write generates a fresh
+// random one every call (upsert requires a stable caller-chosen ID, on every layer). Not a
+// gap — see README.md's "Load memory from a file" section.
 func TestRepeatedWriteWithNoIDCreatesASeparateEdgeNotAnUpsert(t *testing.T) {
 	s := open(t)
 	ctx := context.Background()
