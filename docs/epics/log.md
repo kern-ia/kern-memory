@@ -1,5 +1,10 @@
 # Epics bundle — update log
 
+## 2026-08-11 (11)
+* **Started**: [implement-issue] Epic 2 issue 1 (editable content format & loader CLI,
+  [#19](https://github.com/kern-ia/kern-memory/issues/19)) — branch
+  `issue-19-editable-content-format-and-loader-cli`.
+
 ## 2026-08-12
 * **Creation**: [create-issues] Epic 2 (AvelFinances content population) broken into
   3 issues: [#19](https://github.com/kern-ia/kern-memory/issues/19) editable content
