@@ -112,6 +112,87 @@ func TestRouterQueryFansOutToBothLayersAndMergesByKindWhenUnrestricted(t *testin
 	}
 }
 
+func TestRouterWriteRoutesGraphKindToTheGraphStore(t *testing.T) {
+	okf, vec, graph := &fakeStore{}, &fakeStore{}, &fakeStore{}
+	r := &Router{OKF: okf, Vector: vec, Graph: graph}
+
+	if _, err := r.Write(context.Background(), Memory{Kind: KindGraph, FromID: "a", ToID: "b", Relation: "cites"}); err != nil {
+		t.Fatalf("Write: %v", err)
+	}
+
+	if len(graph.written) != 1 || len(okf.written) != 0 || len(vec.written) != 0 {
+		t.Errorf("graph.written=%d okf.written=%d vec.written=%d, want 1/0/0", len(graph.written), len(okf.written), len(vec.written))
+	}
+}
+
+func TestRouterWriteWithUnsetGraphReturnsAClearErrorNotAPanic(t *testing.T) {
+	r := &Router{OKF: &fakeStore{}, Vector: &fakeStore{}}
+
+	_, err := r.Write(context.Background(), Memory{Kind: KindGraph, FromID: "a", ToID: "b", Relation: "cites"})
+	if err == nil {
+		t.Fatal("expected an error for an unset Router.Graph, got nil")
+	}
+}
+
+func TestRouterQueryRoutesGraphKindToTheGraphStore(t *testing.T) {
+	okf := &fakeStore{recalls: []Recall{{Memory: Memory{Text: "fait déclaratif"}, Similarity: 1}}}
+	vec := &fakeStore{recalls: []Recall{{Memory: Memory{Text: "souvenir sémantique"}, Similarity: 0.8}}}
+	graph := &fakeStore{recalls: []Recall{{Memory: Memory{FromID: "a", ToID: "b", Relation: "cites"}, Similarity: 1}}}
+	r := &Router{OKF: okf, Vector: vec, Graph: graph}
+
+	got, err := r.Query(context.Background(), Query{Kind: KindGraph, Text: "x"})
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	if len(got) != 1 || got[0].Memory.Relation != "cites" {
+		t.Errorf("got %v, want only the graph layer's recall", got)
+	}
+}
+
+func TestRouterQueryWithUnsetGraphReturnsAClearErrorNotAPanic(t *testing.T) {
+	r := &Router{OKF: &fakeStore{}, Vector: &fakeStore{}}
+
+	_, err := r.Query(context.Background(), Query{Kind: KindGraph, Text: "x"})
+	if err == nil {
+		t.Fatal("expected an error for an unset Router.Graph, got nil")
+	}
+}
+
+func TestRouterQueryFansOutToAllThreeLayersAndMergesByKindWhenUnrestricted(t *testing.T) {
+	okf := &fakeStore{recalls: []Recall{{Memory: Memory{Text: "fait"}, Similarity: 1}}}
+	vec := &fakeStore{recalls: []Recall{{Memory: Memory{Text: "souvenir haut"}, Similarity: 0.9},
+		{Memory: Memory{Text: "souvenir bas"}, Similarity: 0.4}}}
+	graph := &fakeStore{recalls: []Recall{{Memory: Memory{Relation: "cites"}, Similarity: 0.6}}}
+	r := &Router{OKF: okf, Vector: vec, Graph: graph}
+
+	got, err := r.Query(context.Background(), Query{Text: "x"})
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	if len(got) != 4 {
+		t.Fatalf("got %d recalls, want 4 (merged from all three layers)", len(got))
+	}
+	for i := 1; i < len(got); i++ {
+		if got[i-1].Similarity < got[i].Similarity {
+			t.Errorf("recalls not sorted by similarity desc: %v", got)
+		}
+	}
+}
+
+func TestRouterQueryFanOutStaysTwoLayerWhenGraphIsUnset(t *testing.T) {
+	okf := &fakeStore{recalls: []Recall{{Memory: Memory{Text: "fait"}, Similarity: 1}}}
+	vec := &fakeStore{recalls: []Recall{{Memory: Memory{Text: "souvenir"}, Similarity: 0.5}}}
+	r := &Router{OKF: okf, Vector: vec}
+
+	got, err := r.Query(context.Background(), Query{Text: "x"})
+	if err != nil {
+		t.Fatalf("Query: %v (unset Router.Graph must not break the empty-Kind fan-out)", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("got %d recalls, want 2 (Graph unset, backward compatible with the two-layer fan-out)", len(got))
+	}
+}
+
 func TestRouterQueryRejectsAnUnknownKind(t *testing.T) {
 	r := &Router{OKF: &fakeStore{}, Vector: &fakeStore{}}
 
