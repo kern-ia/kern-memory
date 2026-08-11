@@ -120,6 +120,56 @@ func TestWriteKeepsAGivenID(t *testing.T) {
 	}
 }
 
+// TestWriteWithARepeatedGivenIDFailsRatherThanUpserting documents a real gap found while
+// building epic-2 issue 1's load-memory loader: unlike okf.Store (ON CONFLICT DO UPDATE)
+// and vector.Store (ID-keyed map overwrite), graph_edges' schema has no ON CONFLICT clause,
+// so a second Write with the same explicit ID hits the PRIMARY KEY constraint and errors —
+// loudly, not silently, but it is not an upsert.
+func TestWriteWithARepeatedGivenIDFailsRatherThanUpserting(t *testing.T) {
+	s := open(t)
+	ctx := context.Background()
+
+	if _, err := s.Write(ctx, memory.Memory{ID: "edge-1", FromID: "a", ToID: "b", Relation: "rel"}); err != nil {
+		t.Fatalf("first Write: %v", err)
+	}
+
+	_, err := s.Write(ctx, memory.Memory{ID: "edge-1", FromID: "a", ToID: "c", Relation: "rel2"})
+	if err == nil {
+		t.Fatal("expected an error on a repeated explicit ID (graph_edges has no ON CONFLICT clause), got nil")
+	}
+}
+
+// TestRepeatedWriteWithNoIDCreatesASeparateEdgeNotAnUpsert documents the other half of the
+// same gap: the load-memory file format's edge entries carry no id field (see the issue's
+// example), so a caller re-running the loader on an unchanged file leaves every edge's ID
+// empty — Write then generates a fresh random ID each time, and the same logical edge
+// accumulates as multiple rows rather than upserting.
+func TestRepeatedWriteWithNoIDCreatesASeparateEdgeNotAnUpsert(t *testing.T) {
+	s := open(t)
+	ctx := context.Background()
+
+	if _, err := s.Write(ctx, memory.Memory{FromID: "a", ToID: "b", Relation: "rel"}); err != nil {
+		t.Fatalf("first Write: %v", err)
+	}
+	if _, err := s.Write(ctx, memory.Memory{FromID: "a", ToID: "b", Relation: "rel"}); err != nil {
+		t.Fatalf("second Write: %v", err)
+	}
+
+	out, err := s.Query(ctx, memory.Query{FromKind: "", FromID: "a"})
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	count := 0
+	for _, r := range out {
+		if r.Memory.ToID == "b" {
+			count++
+		}
+	}
+	if count != 2 {
+		t.Errorf("got %d edges a->b after two identical writes, want 2 (no ID means no upsert, this is a real gap, not a bug in this test)", count)
+	}
+}
+
 func TestWriteRejectsAnEmptyRelation(t *testing.T) {
 	s := open(t)
 	ctx := context.Background()

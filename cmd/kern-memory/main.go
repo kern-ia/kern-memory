@@ -33,6 +33,8 @@ func main() {
 		err = runServe()
 	case "seed":
 		err = runSeed(os.Args[2:])
+	case "load-memory":
+		err = runLoadMemory(os.Args[2:])
 	default:
 		usage()
 		os.Exit(2)
@@ -44,7 +46,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: kern-memory serve | kern-memory seed <title> <body-file>")
+	fmt.Fprintln(os.Stderr, "usage: kern-memory serve | kern-memory seed <title> <body-file> | kern-memory load-memory <file>")
 }
 
 func runServe() error {
