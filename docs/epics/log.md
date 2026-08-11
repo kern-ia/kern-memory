@@ -1,5 +1,14 @@
 # Epics bundle — update log
 
+## 2026-08-11 (9)
+* **PR opened**: [drift fix] Kern-Anon module rename (github.com/YoLaub/PresidioGo →
+  github.com/kern-ia/kern-anon) — Updated go.mod and all imports in
+  `internal/memory/anon/{store,ner_noop,ner_onnx,store_test}.go` to resolve build
+  failures in fresh worktrees. See drift record
+  `docs/epics/epic-1-graph-layer/drift/01-presidiogo-module-rename-blocks-local-build.md`.
+  `go build ./...` and `go test -race ./...` green (8/8 packages). 
+  [PR #17](https://github.com/kern-ia/kern-memory/pull/17) against `dev`.
+
 ## 2026-08-11 (8)
 * **PR opened**: [implement-issue] Epic 1 issue 4 (HTTP wiring & config,
   [#9](https://github.com/kern-ia/kern-memory/issues/9)) — last issue in Epic 1.
