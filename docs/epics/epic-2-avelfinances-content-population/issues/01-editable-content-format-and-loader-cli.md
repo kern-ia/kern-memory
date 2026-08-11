@@ -8,8 +8,9 @@ epic: 2
 issue: 1
 slug: editable-content-format-and-loader-cli
 size: M
-status: in-progress
+status: pr-open
 gh_issue: 19
+gh_pr: 23
 resource: https://github.com/kern-ia/kern-memory/issues/19
 depends_on: []
 ---
