@@ -8,7 +8,7 @@ epic: 2
 issue: 3
 slug: end-to-end-recall-verification
 size: S
-status: pr-open
+status: done
 gh_issue: 21
 gh_pr: 25
 resource: https://github.com/kern-ia/kern-memory/issues/21
