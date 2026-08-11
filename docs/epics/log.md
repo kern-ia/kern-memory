@@ -1,5 +1,13 @@
 # Epics bundle — update log
 
+## 2026-08-11
+* **PR opened**: [implement-issue] Epic 1 issue 1 (contract & routing,
+  [#6](https://github.com/kern-ia/kern-memory/issues/6)) — Router gains a `Graph`
+  field and `KindGraph` routing on `Write`/`Query`; empty-`Kind` fan-out extends to
+  three layers when `Graph` is configured, stays two-layer (backward compatible)
+  when it isn't. `go test -race ./internal/memory/...` green (14/14).
+  [PR #11](https://github.com/kern-ia/kern-memory/pull/11) against `dev`.
+
 ## 2026-08-10 (2)
 * **Creation**: [create-issues] Epic 1 (Graph layer) broken into 4 issues:
   [#6](https://github.com/kern-ia/kern-memory/issues/6) contract & routing (S),
