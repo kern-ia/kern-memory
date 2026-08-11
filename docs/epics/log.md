@@ -1,5 +1,11 @@
 # Epics bundle — update log
 
+## 2026-08-11 (7)
+* **Reconcile**: [implement-issue] Epic 1 issue 3 (graph store query/traversal,
+  [#8](https://github.com/kern-ia/kern-memory/issues/8)) merged via
+  [PR #14](https://github.com/kern-ia/kern-memory/pull/14) into `dev` — status flipped
+  to `done`. Issue #8 already closed on GitHub.
+
 ## 2026-08-11 (6)
 * **PR opened**: [implement-issue] Epic 1 issue 3 (graph store query/traversal,
   [#8](https://github.com/kern-ia/kern-memory/issues/8)) — `Query` on
