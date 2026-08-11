@@ -6,7 +6,7 @@ tags: [epic]
 timestamp: 2026-08-10T10:00:00Z
 epic: 2
 slug: avelfinances-content-population
-status: open
+status: done
 gh_issue: 4
 milestone: 2
 resource: https://github.com/kern-ia/kern-memory/issues/4
