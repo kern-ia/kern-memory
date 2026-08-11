@@ -1,5 +1,15 @@
 # Epics bundle — update log
 
+## 2026-08-12 (Close)
+* **Closed**: [close-epic] Epic 2: AvelFinances content population. Milestone 2 and
+  tracking issue [#4](https://github.com/kern-ia/kern-memory/issues/4) closed. No
+  drift to promote (the graph-layer upsert gap found during #19 isn't drift — no
+  decided standard promised upsert on that layer — so it was filed as a follow-up
+  instead: [#27](https://github.com/kern-ia/kern-memory/issues/27)). 5 stale merged
+  remote branches cleaned up (no worktrees remained — already cleaned during the
+  implement-epic loop). Both epics from `docs/planning/SCOPE.md`'s phase-2 milestones
+  are now done.
+
 ## 2026-08-12 (Reconcile)
 * **Reconcile**: [implement-issue] Epic 2 issue 3 (end-to-end recall verification,
   [#21](https://github.com/kern-ia/kern-memory/issues/21)) merged via
