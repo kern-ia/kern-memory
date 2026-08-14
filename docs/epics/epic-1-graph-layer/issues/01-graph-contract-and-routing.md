@@ -3,13 +3,14 @@ type: Issue
 title: "Add graph contract fields and Router routing"
 description: "Extend memory.Memory/Query with edge fields and a KindGraph case in Router, with no storage behind it yet."
 tags: [epic-1]
-timestamp: 2026-08-10T11:00:00Z
+timestamp: 2026-08-11T16:24:41Z
 epic: 1
 issue: 1
 slug: graph-contract-and-routing
 size: S
-status: open
+status: done
 gh_issue: 6
+gh_pr: 11
 resource: https://github.com/kern-ia/kern-memory/issues/6
 depends_on: []
 ---

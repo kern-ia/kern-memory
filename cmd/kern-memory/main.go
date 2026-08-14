@@ -15,6 +15,7 @@ import (
 	"github.com/yoann/kern-memory/internal/httpapi"
 	"github.com/yoann/kern-memory/internal/memory"
 	"github.com/yoann/kern-memory/internal/memory/anon"
+	"github.com/yoann/kern-memory/internal/memory/graph"
 	"github.com/yoann/kern-memory/internal/memory/okf"
 	"github.com/yoann/kern-memory/internal/memory/vector"
 	"github.com/yoann/kern-memory/internal/store"
@@ -32,6 +33,8 @@ func main() {
 		err = runServe()
 	case "seed":
 		err = runSeed(os.Args[2:])
+	case "load-memory":
+		err = runLoadMemory(os.Args[2:])
 	default:
 		usage()
 		os.Exit(2)
@@ -43,7 +46,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: kern-memory serve | kern-memory seed <title> <body-file>")
+	fmt.Fprintln(os.Stderr, "usage: kern-memory serve | kern-memory seed <title> <body-file> | kern-memory load-memory <file>")
 }
 
 func runServe() error {
@@ -68,9 +71,10 @@ func runServe() error {
 	return http.ListenAndServe(cfg.Addr, httpapi.NewCombinedRouter(s, mem, cfg.Token))
 }
 
-// openMemory wires EPIC-13 phase 1's Router (internal/memory) from the two layers plus
-// the optional kern-anon transverse — see internal/memory/anon's doc for why Write-time
-// masking has no round trip here, unlike courtage-extraction's.
+// openMemory wires EPIC-13 phase 1's Router (internal/memory) from the OKF and vector
+// layers, Epic 1's graph layer, plus the optional kern-anon transverse — see
+// internal/memory/anon's doc for why Write-time masking has no round trip here, unlike
+// courtage-extraction's.
 func openMemory(cfg config.Config) (memory.Store, func(), error) {
 	okfStore, err := okf.Open(cfg.OKFDB)
 	if err != nil {
@@ -81,11 +85,18 @@ func openMemory(cfg config.Config) (memory.Store, func(), error) {
 		okfStore.Close()
 		return nil, nil, err
 	}
+	graphStore, err := graph.Open(cfg.GraphDB)
+	if err != nil {
+		okfStore.Close()
+		vectorStore.Close()
+		return nil, nil, err
+	}
 
-	router := &memory.Router{OKF: okfStore, Vector: vectorStore}
+	router := &memory.Router{OKF: okfStore, Vector: vectorStore, Graph: graphStore}
 	closeFn := func() {
 		okfStore.Close()
 		vectorStore.Close()
+		graphStore.Close()
 	}
 
 	if !cfg.Pseudonymize {

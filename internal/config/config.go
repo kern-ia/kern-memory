@@ -16,6 +16,10 @@ const (
 	EnvOllamaModel  = "KERN_MEMORY_OLLAMA_MODEL"
 	EnvOllamaURL    = "KERN_MEMORY_OLLAMA_URL"
 	EnvPseudonymize = "KERN_MEMORY_PSEUDONYMIZE"
+
+	// EnvGraphDB (Epic 1) — the graph layer's own SQLite file, same one-file-per-layer
+	// pattern as EnvOKFDB/EnvVectorDB.
+	EnvGraphDB = "KERN_MEMORY_GRAPH_DB"
 )
 
 // Config is what `serve` needs, read once at startup.
@@ -29,6 +33,7 @@ type Config struct {
 	OllamaModel  string
 	OllamaURL    string
 	Pseudonymize bool
+	GraphDB      string
 }
 
 // Load reads Config from the environment, applying the same local-development defaults as
@@ -46,6 +51,7 @@ func Load() Config {
 		// Pseudonymize defaults to true — "mémoriser du pseudonymisé" is the safe
 		// default (ROADMAP EPIC-13 transverse), not an opt-in a caller has to remember.
 		Pseudonymize: os.Getenv(EnvPseudonymize) != "false",
+		GraphDB:      getOr(EnvGraphDB, "kern-memory-graph.db"),
 	}
 }
 

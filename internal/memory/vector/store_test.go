@@ -72,6 +72,84 @@ func TestQueryFindsTheMostSemanticallySimilarMemory(t *testing.T) {
 	}
 }
 
+// Resolving known ids (decision 16) must not need an embedding call at all — GetByID is a
+// direct lookup, not a similarity search, so this works even with an empty Query.Text.
+func TestQueryByIDsResolvesWithoutAnEmbeddingCall(t *testing.T) {
+	s := open(t)
+	ctx := context.Background()
+	_, err := s.Write(ctx, memory.Memory{ID: "a", Text: "x", Tags: []string{"t1"}})
+	if err != nil {
+		t.Fatalf("Write: %v", err)
+	}
+	_, err = s.Write(ctx, memory.Memory{ID: "b", Text: "y"})
+	if err != nil {
+		t.Fatalf("Write: %v", err)
+	}
+
+	got, err := s.Query(ctx, memory.Query{IDs: []string{"a"}})
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	if len(got) != 1 || got[0].Memory.ID != "a" || got[0].Memory.Text != "x" {
+		t.Errorf("got %v, want only memory a with its text", got)
+	}
+	if len(got[0].Memory.Tags) != 1 || got[0].Memory.Tags[0] != "t1" {
+		t.Errorf("Tags = %v, want [t1]", got[0].Memory.Tags)
+	}
+}
+
+// An id that was never written is silently absent — same "best-effort resolve"
+// contract as the okf layer, not an error.
+func TestQueryByIDsIgnoresAnUnknownID(t *testing.T) {
+	s := open(t)
+	ctx := context.Background()
+	_, err := s.Write(ctx, memory.Memory{ID: "a", Text: "x"})
+	if err != nil {
+		t.Fatalf("Write: %v", err)
+	}
+
+	got, err := s.Query(ctx, memory.Query{IDs: []string{"a", "jamais-ecrit"}})
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	if len(got) != 1 || got[0].Memory.ID != "a" {
+		t.Errorf("got %v, want only a", got)
+	}
+}
+
+// TestWriteUpsertsOnARepeatedID confirms the vector layer behaves like okf.Store on a
+// repeat write with the same id (load-memory's re-run case, epic-2 issue 1): chromem-go's
+// AddDocument stores documents in an ID-keyed map (c.documents[doc.ID] = &doc), so writing
+// the same ID twice overwrites in place rather than erroring or duplicating.
+func TestWriteUpsertsOnARepeatedID(t *testing.T) {
+	s := open(t)
+	ctx := context.Background()
+
+	if _, err := s.Write(ctx, memory.Memory{ID: "item-1", Text: "version 1", Tags: []string{"a"}}); err != nil {
+		t.Fatalf("first Write: %v", err)
+	}
+	if _, err := s.Write(ctx, memory.Memory{ID: "item-1", Text: "version 2", Tags: []string{"b"}}); err != nil {
+		t.Fatalf("second Write (upsert): %v", err)
+	}
+
+	got, err := s.Query(ctx, memory.Query{Text: "version 2", Limit: 10})
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	count := 0
+	for _, r := range got {
+		if r.Memory.ID == "item-1" {
+			count++
+			if r.Memory.Text != "version 2" {
+				t.Errorf("got Text=%q, want the second write's content", r.Memory.Text)
+			}
+		}
+	}
+	if count != 1 {
+		t.Errorf("got %d recalls for id item-1, want 1 (upsert must not duplicate)", count)
+	}
+}
+
 func TestSurvivesAProcessRestart(t *testing.T) {
 	requireOllama(t)
 	dir := t.TempDir() + "/vector.db"

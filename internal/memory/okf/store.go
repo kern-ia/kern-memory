@@ -91,7 +91,13 @@ func (s *Store) Write(ctx context.Context, m memory.Memory) (memory.Memory, erro
 // Query returns every memory whose Tags is a superset of q.Tags (all requested tags must
 // be present), or every memory when q.Tags is empty. Similarity is always 1 — an exact
 // lookup, not a ranked recall.
+//
+// q.IDs (decision 16), when set, takes over entirely: "return exactly these" instead of
+// a tag search — a caller resolving known ids has nothing to search for, so Tags is
+// ignored rather than combined with it.
 func (s *Store) Query(ctx context.Context, q memory.Query) ([]memory.Recall, error) {
+	wantIDs := toSet(q.IDs)
+
 	rows, err := s.db.QueryContext(ctx,
 		`SELECT id, text, tags_json, meta_json, created_at FROM okf_memories ORDER BY created_at DESC`)
 	if err != nil {
@@ -118,12 +124,26 @@ func (s *Store) Query(ctx context.Context, q memory.Query) ([]memory.Recall, err
 		m.CreatedAt, _ = time.Parse(time.RFC3339Nano, createdAt)
 		m.Kind = memory.KindOKF
 
-		if !hasAllTags(m.Tags, q.Tags) {
+		if len(wantIDs) > 0 {
+			if !wantIDs[m.ID] {
+				continue
+			}
+		} else if !hasAllTags(m.Tags, q.Tags) {
 			continue
 		}
 		out = append(out, memory.Recall{Memory: m, Similarity: 1})
 	}
 	return out, rows.Err()
+}
+
+// toSet turns ids into a lookup set. An empty/nil input yields an empty (not nil) map,
+// so callers can test len() rather than a separate nil check.
+func toSet(ids []string) map[string]bool {
+	set := make(map[string]bool, len(ids))
+	for _, id := range ids {
+		set[id] = true
+	}
+	return set
 }
 
 func hasAllTags(has, want []string) bool {

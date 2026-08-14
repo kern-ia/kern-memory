@@ -44,10 +44,14 @@ Unchanged: single bearer token (`KERN_MEMORY_TOKEN`), constant-time compare, sam
 `memoryServer.auth` middleware ([decision](/specs/04-auth.md)).
 
 ## Interfaces & integrations
-`memory.Memory` and `memory.Query` gain optional fields — `FromID`, `ToID`, `Relation`
-on `Memory`; `Depth` on `Query` — used only when `Kind == KindGraph`. No new HTTP
-routes: the existing `POST /api/v1/memory/write` and `/query` carry graph edges and
-traversals the same way they carry `.okf` facts and vector text today
+`memory.Memory` and `memory.Query` gain optional fields — `FromKind`, `FromID`,
+`ToKind`, `ToID`, `Relation` on `Memory`; `Depth` on `Query` — used only when
+`Kind == KindGraph`. `FromKind`/`ToKind` carry the referenced memory's own layer
+(`okf` or `vector`), matching the storage schema's `(kind, id)` composite reference
+([correction](/specs/05-graph-interface-contract.md), found during issue #7's
+implementation — the original recommendation omitted them). No new HTTP routes: the
+existing `POST /api/v1/memory/write` and `/query` carry graph edges and traversals the
+same way they carry `.okf` facts and vector text today
 ([decision](/specs/05-graph-interface-contract.md)). No new external integration
 ([decision](/specs/06-external-integrations.md)).
 
