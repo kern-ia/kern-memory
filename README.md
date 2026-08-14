@@ -60,10 +60,10 @@ on its own:
   that loop (read → suggest → the person decides) has only its second half built.
 - **A write path for documents.** Content only enters through `seed`; there is no
   HTTP equivalent yet, unlike the memory API's `write`.
-- **A graph/relationship layer.** Today's two memory layers answer "what fact matches
-  this tag" and "what text is close in meaning to this" — neither answers "what is
-  connected to what, and since when" (multi-hop reasoning, provenance, recency). Real
-  need, not yet designed.
+- **Resolving a graph node's own content.** Traversal (`kind: "graph"`) answers "what is
+  connected to what" — it returns edges, not the text/tags of the memories at each end.
+  A caller has to query the `.okf`/vector layer separately for each id it gets back;
+  there is no batch "resolve these ids" call yet.
 - **Traced recall.** Nothing records *when* or *by whom* a memory was written or recalled.
   A brick for that (audit/observability) does not exist yet anywhere in the ecosystem —
   this is blocked on something outside this repo, not forgotten.
@@ -118,14 +118,24 @@ runs) — the same bearer-token convention as above, on the same daemon.
 // POST /api/v1/memory/query
 {"text": "quelle banque accepte une SCI ?", "limit": 5}
 // → 200 [{ "memory": {"id": "...", "kind": "vector", "text": "..."}, "similarity": 0.83 }]
+
+// POST /api/v1/memory/write — a graph edge (Epic 1)
+{"kind": "graph", "from_kind": "vector", "from_id": "criterion-a", "to_kind": "vector", "to_id": "criterion-b", "relation": "supersedes"}
+// → 200 { "id": "...", "kind": "graph", "from_kind": "vector", "from_id": "criterion-a", "to_kind": "vector", "to_id": "criterion-b", "relation": "supersedes" }
+
+// POST /api/v1/memory/query — a graph traversal (Epic 1)
+{"kind": "graph", "from_kind": "vector", "from_id": "criterion-a", "depth": 2}
+// → 200 [{ "memory": {"id": "...", "kind": "graph", "from_id": "criterion-a", "to_id": "criterion-b", "relation": "supersedes"}, "similarity": 1 }]
 ```
 
 | Field | Meaning |
 |---|---|
-| `kind` | `"okf"` (declarative) or `"vector"` (semantic). Empty on write defaults to `"vector"` — most memory has no natural lookup key. Empty on query fans out to both layers, merged by `similarity` descending. |
-| `id` | Stable caller-chosen key upserts (overwrites) rather than erroring on a repeat — a caller with a natural key (e.g. a run id) does not have to track existence first. Omitted, a random id is generated. |
-| `tags` | Declarative layer: a query with `tags` returns only memories carrying **all** of them. Ignored by the semantic layer. |
-| `text` | Pseudonymized (`kern-anon`) before it reaches either layer, unless `KERN_MEMORY_PSEUDONYMIZE=false`. What is written is what stays at rest — there is no round-trip demasking; see `internal/memory/anon`'s own doc for why that differs from `kern-orch`'s courtage-extraction pipeline. |
+| `kind` | `"okf"` (declarative), `"vector"` (semantic) or `"graph"` (an edge — Epic 1). Empty on write defaults to `"vector"` — most memory has no natural lookup key. Empty on query fans out to every configured layer (okf, vector, and graph if wired), merged by `similarity` descending. |
+| `id` | Stable caller-chosen key upserts (overwrites) rather than erroring on a repeat — a caller with a natural key (e.g. a run id) does not have to track existence first. Omitted, a random id is generated. Also true for `kind: "graph"` since #27. |
+| `tags` | Declarative layer: a query with `tags` returns only memories carrying **all** of them. Ignored by the semantic and graph layers. |
+| `text` | Pseudonymized (`kern-anon`) before it reaches either layer, unless `KERN_MEMORY_PSEUDONYMIZE=false`. What is written is what stays at rest — there is no round-trip demasking; see `internal/memory/anon`'s own doc for why that differs from `kern-orch`'s courtage-extraction pipeline. Not used by `kind: "graph"` (an edge carries no text of its own). |
+| `from_kind`/`from_id`/`to_kind`/`to_id`/`relation` | Only meaningful when `kind: "graph"`: one directed edge between two existing memories, referenced by the `(kind, id)` composite each layer's ids need to be disambiguated by (an id has no shared namespace across layers). `relation` is a short label (≤64 bytes, no newline), not prose. The graph layer never validates that the referenced memories actually exist — it has no read access to the `.okf`/vector layers. |
+| `depth` | Only meaningful when querying `kind: "graph"`: how many hops to walk from `from_kind`/`from_id` (`1` or unset = direct edges only). Clamped server-side to a hard maximum regardless of what the caller requests. |
 
 **What deliberately does not travel**: embeddings themselves (an implementation detail of
 the semantic layer, not part of the contract — a caller never sees a raw vector).
@@ -148,6 +158,7 @@ API; this is a deliberate sovereignty choice, not a limitation to work around la
 | `KERN_MEMORY_DB` | SQLite file (documents/suggestions) | `kern-memory.db` |
 | `KERN_MEMORY_OKF_DB` | SQLite file (declarative memory) | `kern-memory-okf.db` |
 | `KERN_MEMORY_VECTOR_DB` | `chromem-go` directory (semantic memory) | `kern-memory-vector.db` |
+| `KERN_MEMORY_GRAPH_DB` | SQLite file (graph edges, Epic 1) | `kern-memory-graph.db` |
 | `KERN_MEMORY_OLLAMA_MODEL` | Ollama embedding model | `nomic-embed-text` |
 | `KERN_MEMORY_OLLAMA_URL` | Ollama API base URL | `chromem-go`'s own default, local |
 | `KERN_MEMORY_PSEUDONYMIZE` | Mask PII before writing | `true` (`false` disables) |
