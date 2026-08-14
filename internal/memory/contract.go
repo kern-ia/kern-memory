@@ -54,10 +54,16 @@ type Memory struct {
 // layers — see contract 05), and Depth bounds how many hops the traversal walks from
 // there (the graph layer clamps it to a hard server-side maximum regardless of what the
 // caller requests).
+//
+// IDs, meaningful for KindOKF and KindVector (decision 16), means "return exactly these
+// memories" instead of a tag/text search — mutually exclusive with Tags/Text in practice,
+// since a caller resolving known ids has nothing to search for. Ignored by the graph
+// layer: an edge is never looked up by id this way, only the memories it references are.
 type Query struct {
 	Text     string
 	Kind     Kind
 	Tags     []string
+	IDs      []string
 	Limit    int
 	FromKind string
 	FromID   string

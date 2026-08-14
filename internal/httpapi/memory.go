@@ -117,6 +117,9 @@ type memoryQueryRequest struct {
 	FromKind string `json:"from_kind"`
 	FromID   string `json:"from_id"`
 	Depth    int    `json:"depth"`
+	// IDs (decision 16), meaningful for kind "okf" or "vector", resolves exactly these
+	// memories instead of a tag/text search.
+	IDs []string `json:"ids"`
 }
 
 type recallDTO struct {
@@ -132,7 +135,7 @@ func (s *memoryServer) handleQuery(w http.ResponseWriter, r *http.Request) {
 	}
 
 	recalls, err := s.store.Query(r.Context(), memory.Query{
-		Text: req.Text, Kind: memory.Kind(req.Kind), Tags: req.Tags, Limit: req.Limit,
+		Text: req.Text, Kind: memory.Kind(req.Kind), Tags: req.Tags, IDs: req.IDs, Limit: req.Limit,
 		FromKind: req.FromKind, FromID: req.FromID, Depth: req.Depth,
 	})
 	if err != nil {

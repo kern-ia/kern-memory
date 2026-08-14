@@ -208,6 +208,28 @@ func TestHandleMemoryQueryThreadsGraphTraversalFields(t *testing.T) {
 	}
 }
 
+// Resolving known ids (decision 16) travels the same query endpoint.
+func TestHandleMemoryQueryThreadsIDs(t *testing.T) {
+	mem := &fakeMemoryStore{recalls: []memory.Recall{
+		{Memory: memory.Memory{ID: "a", Kind: memory.KindOKF, Text: "x"}, Similarity: 1},
+	}}
+	body, _ := json.Marshal(map[string]any{
+		"kind": "okf",
+		"ids":  []string{"a", "b"},
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/memory/query", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	NewMemoryRouter(mem, "").ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", rec.Code, rec.Body.String())
+	}
+	if len(mem.lastQuery.IDs) != 2 || mem.lastQuery.IDs[0] != "a" || mem.lastQuery.IDs[1] != "b" {
+		t.Errorf("query sent to store = %+v, want ids=[a b]", mem.lastQuery)
+	}
+}
+
 func TestHandleMemoryWritePropagatesAStoreError(t *testing.T) {
 	mem := &fakeMemoryStore{err: errBoom}
 	body, _ := json.Marshal(map[string]any{"kind": "okf", "text": "x"})

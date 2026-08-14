@@ -126,6 +126,10 @@ runs) — the same bearer-token convention as above, on the same daemon.
 // POST /api/v1/memory/query — a graph traversal (Epic 1)
 {"kind": "graph", "from_kind": "vector", "from_id": "criterion-a", "depth": 2}
 // → 200 [{ "memory": {"id": "...", "kind": "graph", "from_id": "criterion-a", "to_id": "criterion-b", "relation": "supersedes"}, "similarity": 1 }]
+
+// POST /api/v1/memory/query — resolving known ids (decision 16)
+{"kind": "vector", "ids": ["criterion-a", "criterion-b"]}
+// → 200 [{ "memory": {"id": "criterion-a", "kind": "vector", "text": "..."}, "similarity": 1 }, ...]
 ```
 
 | Field | Meaning |
@@ -136,10 +140,18 @@ runs) — the same bearer-token convention as above, on the same daemon.
 | `text` | Pseudonymized (`kern-anon`) before it reaches either layer, unless `KERN_MEMORY_PSEUDONYMIZE=false`. What is written is what stays at rest — there is no round-trip demasking; see `internal/memory/anon`'s own doc for why that differs from `kern-orch`'s courtage-extraction pipeline. Not used by `kind: "graph"` (an edge carries no text of its own). |
 | `from_kind`/`from_id`/`to_kind`/`to_id`/`relation` | Only meaningful when `kind: "graph"`: one directed edge between two existing memories, referenced by the `(kind, id)` composite each layer's ids need to be disambiguated by (an id has no shared namespace across layers). `relation` is a short label (≤64 bytes, no newline), not prose. The graph layer never validates that the referenced memories actually exist — it has no read access to the `.okf`/vector layers. |
 | `depth` | Only meaningful when querying `kind: "graph"`: how many hops to walk from `from_kind`/`from_id` (`1` or unset = direct edges only). Clamped server-side to a hard maximum regardless of what the caller requests. |
+| `ids` | Meaningful when querying `kind: "okf"` or `kind: "vector"` (decision 16): resolves exactly these memories instead of a tag/text search — a graph traversal returns edges, never the content of the memories at either end, so a caller wanting labels for the nodes it reached does one resolve call per kind. An id that doesn't exist is silently absent from the result, not an error. |
 
 **What deliberately does not travel**: embeddings themselves (an implementation detail of
 the semantic layer, not part of the contract — a caller never sees a raw vector).
 `metadata` is free-form and passed through verbatim; kern-memory does not interpret it.
+
+**Graph roots** (decision 15): a "root" — an explicit entry point for a consumer that
+wants to open a broad view with no single starting node in mind (kern-ui's Cerveau view,
+for instance) — is not a new field or endpoint. It is an ordinary `kind: "okf"` memory
+tagged `cerveau-racine`. Writing one is the write call above with that tag; listing every
+root is a query with `{"kind":"okf","tags":["cerveau-racine"]}`. Deliberately OKF-only —
+see the decision doc for why.
 
 ### Consumed — Ollama (embeddings)
 

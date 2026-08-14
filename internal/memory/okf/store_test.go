@@ -119,6 +119,59 @@ func TestQueryResultsCarryFullSimilarityAndTheirTags(t *testing.T) {
 	}
 }
 
+// Resolving known ids (decision 16) — a lookup, not a search.
+func TestQueryByIDsReturnsExactlyThoseMemories(t *testing.T) {
+	s := open(t)
+	ctx := context.Background()
+	_, _ = s.Write(ctx, memory.Memory{ID: "a", Text: "x", Tags: []string{"t1"}})
+	_, _ = s.Write(ctx, memory.Memory{ID: "b", Text: "y", Tags: []string{"t2"}})
+	_, _ = s.Write(ctx, memory.Memory{ID: "c", Text: "z", Tags: []string{"t3"}})
+
+	got, err := s.Query(ctx, memory.Query{IDs: []string{"a", "c"}})
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("got %d, want 2", len(got))
+	}
+	ids := map[string]bool{got[0].Memory.ID: true, got[1].Memory.ID: true}
+	if !ids["a"] || !ids["c"] {
+		t.Errorf("got %v, want a and c", got)
+	}
+}
+
+// An id that does not exist is silently absent from the result, not an error — the same
+// "best-effort resolve" a caller batching several ids across an evolving graph needs.
+func TestQueryByIDsIgnoresAnUnknownID(t *testing.T) {
+	s := open(t)
+	ctx := context.Background()
+	_, _ = s.Write(ctx, memory.Memory{ID: "a", Text: "x"})
+
+	got, err := s.Query(ctx, memory.Query{IDs: []string{"a", "jamais-ecrit"}})
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	if len(got) != 1 || got[0].Memory.ID != "a" {
+		t.Errorf("got %v, want only a", got)
+	}
+}
+
+// IDs takes precedence over Tags when both are set — a resolve call has nothing to
+// search for, it already knows what it wants.
+func TestQueryByIDsIgnoresTagsWhenBothAreSet(t *testing.T) {
+	s := open(t)
+	ctx := context.Background()
+	_, _ = s.Write(ctx, memory.Memory{ID: "a", Text: "x", Tags: []string{"sci"}})
+
+	got, err := s.Query(ctx, memory.Query{IDs: []string{"a"}, Tags: []string{"aucun-rapport"}})
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	if len(got) != 1 || got[0].Memory.ID != "a" {
+		t.Errorf("got %v, want a regardless of the unrelated tag filter", got)
+	}
+}
+
 func TestQueryByMultipleTagsRequiresAllOfThem(t *testing.T) {
 	s := open(t)
 	ctx := context.Background()
