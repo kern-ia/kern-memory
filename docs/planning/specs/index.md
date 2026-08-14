@@ -14,3 +14,5 @@
 * [Configuration & secrets](12-configuration-secrets.md) - na
 * [Background work](13-background-work.md) - na
 * [Data migrations](14-data-migrations.md) - na
+* [Graph roots](15-graph-roots.md) - decided
+* [Resolving a memory's own content by id](16-resolve-by-id.md) - decided

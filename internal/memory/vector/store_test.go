@@ -72,6 +72,51 @@ func TestQueryFindsTheMostSemanticallySimilarMemory(t *testing.T) {
 	}
 }
 
+// Resolving known ids (decision 16) must not need an embedding call at all — GetByID is a
+// direct lookup, not a similarity search, so this works even with an empty Query.Text.
+func TestQueryByIDsResolvesWithoutAnEmbeddingCall(t *testing.T) {
+	s := open(t)
+	ctx := context.Background()
+	_, err := s.Write(ctx, memory.Memory{ID: "a", Text: "x", Tags: []string{"t1"}})
+	if err != nil {
+		t.Fatalf("Write: %v", err)
+	}
+	_, err = s.Write(ctx, memory.Memory{ID: "b", Text: "y"})
+	if err != nil {
+		t.Fatalf("Write: %v", err)
+	}
+
+	got, err := s.Query(ctx, memory.Query{IDs: []string{"a"}})
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	if len(got) != 1 || got[0].Memory.ID != "a" || got[0].Memory.Text != "x" {
+		t.Errorf("got %v, want only memory a with its text", got)
+	}
+	if len(got[0].Memory.Tags) != 1 || got[0].Memory.Tags[0] != "t1" {
+		t.Errorf("Tags = %v, want [t1]", got[0].Memory.Tags)
+	}
+}
+
+// An id that was never written is silently absent — same "best-effort resolve"
+// contract as the okf layer, not an error.
+func TestQueryByIDsIgnoresAnUnknownID(t *testing.T) {
+	s := open(t)
+	ctx := context.Background()
+	_, err := s.Write(ctx, memory.Memory{ID: "a", Text: "x"})
+	if err != nil {
+		t.Fatalf("Write: %v", err)
+	}
+
+	got, err := s.Query(ctx, memory.Query{IDs: []string{"a", "jamais-ecrit"}})
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	if len(got) != 1 || got[0].Memory.ID != "a" {
+		t.Errorf("got %v, want only a", got)
+	}
+}
+
 // TestWriteUpsertsOnARepeatedID confirms the vector layer behaves like okf.Store on a
 // repeat write with the same id (load-memory's re-run case, epic-2 issue 1): chromem-go's
 // AddDocument stores documents in an ID-keyed map (c.documents[doc.ID] = &doc), so writing

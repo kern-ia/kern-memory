@@ -71,7 +71,16 @@ func (s *Store) Write(ctx context.Context, m memory.Memory) (memory.Memory, erro
 // Query embeds q.Text and returns the nearest neighbors by cosine similarity. Limit <= 0
 // defaults to 5; Limit is clamped to the collection's size — chromem-go's Query requires
 // nResults > 0 and errors if it exceeds the document count.
+//
+// q.IDs (decision 16), when set, resolves those exact ids via GetByID instead — a direct
+// lookup, not a similarity search, so it needs no embedding call and works even with an
+// empty q.Text. An id GetByID doesn't recognize is skipped, not an error: a caller
+// resolving ids gathered from a graph traversal may reasonably hit one that moved on.
 func (s *Store) Query(ctx context.Context, q memory.Query) ([]memory.Recall, error) {
+	if len(q.IDs) > 0 {
+		return s.queryByIDs(ctx, q.IDs)
+	}
+
 	n := q.Limit
 	if n <= 0 {
 		n = 5
@@ -95,6 +104,22 @@ func (s *Store) Query(ctx context.Context, q memory.Query) ([]memory.Recall, err
 			return nil, fmt.Errorf("vector: decode metadata: %w", err)
 		}
 		out = append(out, memory.Recall{Memory: m, Similarity: r.Similarity})
+	}
+	return out, nil
+}
+
+func (s *Store) queryByIDs(ctx context.Context, ids []string) ([]memory.Recall, error) {
+	out := make([]memory.Recall, 0, len(ids))
+	for _, id := range ids {
+		doc, err := s.collection.GetByID(ctx, id)
+		if err != nil {
+			continue
+		}
+		m, err := decodeMetadata(doc.ID, doc.Content, doc.Metadata)
+		if err != nil {
+			return nil, fmt.Errorf("vector: decode metadata: %w", err)
+		}
+		out = append(out, memory.Recall{Memory: m, Similarity: 1})
 	}
 	return out, nil
 }
